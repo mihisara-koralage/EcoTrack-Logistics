@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EcoTrack - Supervisor Routes</title>
+    <link rel="stylesheet" href="/css/supervisor.css" />
+    <style>
+        /* Supervisor-specific overrides */
+        .header { background: linear-gradient(135deg, #27ae60 0%, #16a085 100%); }
+        .btn-primary { background: #27ae60; }
+        .btn-primary:hover { background: #16a085; }
+        .filters button { background: #27ae60; }
+        .filters button:hover { background: #16a085; }
+        .pagination button.active { background: #27ae60; }
+        .stat-number { color: #27ae60; }
+
+        /* Enhanced Routes Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        main {
+            padding: 2rem 0;
+        }
+
+        .routes-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .route-stat-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(39, 174, 96, 0.1);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .route-stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #27ae60, #16a085, #27ae60);
+            opacity: 0.8;
+        }
+
+        .route-stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(39, 174, 96, 0.15);
+        }
+
+        .route-stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #27ae60;
+            margin-bottom: 0.5rem;
+        }
+
+        .route-stat-label {
+            font-size: 1rem;
+            color: #6c757d;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .routes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .route-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .route-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #27ae60, #16a085);
+            transition: width 0.3s ease;
+            width: 0;
+        }
+
+        .route-card:hover::before {
+            width: 100%;
+        }
+
+        .route-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(39, 174, 96, 0.15);
+            border-color: #27ae60;
+        }
+
+        .route-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .route-id {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #27ae60;
+        }
+
+        .route-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-active {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+        }
+
+        .status-completed {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+            color: white;
+        }
+
+        .status-pending {
+            background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+            color: white;
+        }
+
+        .route-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .route-info-item {
+            padding: 1rem;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 8px;
+            border: 1px solid rgba(39, 174, 96, 0.1);
+        }
+
+        .route-info-label {
+            font-size: 0.85rem;
+            color: #6c757d;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .route-info-value {
+            font-size: 1rem;
+            color: #495057;
+            font-weight: 500;
+        }
+
+        .route-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .route-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .route-btn-primary {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            color: white;
+        }
+
+        .route-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(39, 174, 96, 0.3);
+        }
+
+        .route-btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+            color: white;
+        }
+
+        .route-btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(108, 117, 125, 0.3);
+        }
+
+        /* Enhanced Navigation Bar Styles */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0;
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(135deg, #27ae60 0%, #16a085 100%);
+            padding: 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            position: relative;
+        }
+
+        .header-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.05)"/><circle cx="10" cy="50" r="0.5" fill="rgba(255,255,255,0.05)"/><circle cx="90" cy="50" r="0.5" fill="rgba(255,255,255,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            pointer-events: none;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo-section h1 {
+            color: white;
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        nav {
+            position: relative;
+            z-index: 1;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            gap: 0.5rem;
+        }
+
+        nav li {
+            position: relative;
+        }
+
+        nav a {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        nav a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        nav a:hover::before {
+            left: 100%;
+        }
+
+        nav a:hover {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        nav a.active {
+            background: rgba(255,255,255,0.3);
+            color: green;
+            box-shadow: 0 2px 10px rgba(255,255,255,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        nav a.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 3px;
+            background: white;
+            border-radius: 2px;
+        }
+
+        .user-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 25px;
+            color: white;
+            font-weight: 500;
+        }
+
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .logout-btn {
+            padding: 0.6rem 1.2rem;
+            background: rgba(231, 76, 60, 0.9);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .logout-btn:hover {
+            background: rgba(192, 57, 43, 0.9);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+        }
+
+        /* Mobile Menu Toggle */
+        .mobile-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+
+            .logo-section h1 {
+                font-size: 1.5rem;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+                position: absolute;
+                top: 1.5rem;
+                right: 1rem;
+            }
+
+            nav {
+                width: 100%;
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.3s ease;
+            }
+
+            nav.active {
+                max-height: 300px;
+            }
+
+            nav ul {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+
+            nav a {
+                padding: 1rem;
+                border-radius: 0;
+            }
+
+            .user-section {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .logo-section {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+
+        /* Enhanced Content */
+        main {
+            padding: 2rem;
+        }
+
+        #status {
+            margin-bottom: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        #status.success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border-left: 4px solid #28a745;
+            color: #155724;
+        }
+
+        #status.error {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+        }
+
+        /* Original Routes Styles */
+        .routes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .route-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-left: 4px solid #27ae60;
+        }
+        
+        .route-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .route-id {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .route-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .status-active { background: #27ae60; color: white; }
+        .status-completed { background: #8e44ad; color: white; }
+        .status-pending { background: #f39c12; color: white; }
+        
+        .route-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .info-item {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .info-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .driver-info {
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-view {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-optimize {
+            background: #27ae60;
+            color: white;
+        }
+        
+        /* Optimization Modal Styles */
+        .optimization-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            max-width: 900px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px 30px;
+            background: linear-gradient(135deg, #27ae60 0%, #16a085 100%);
+            color: white;
+            border-radius: 15px 15px 0 0;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.3s ease;
+        }
+        
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .modal-body {
+            padding: 30px;
+        }
+        
+        .route-info {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #27ae60;
+        }
+        
+        .route-info h4 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 1.2rem;
+        }
+        
+        .optimization-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .route-option {
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid #e9ecef;
+        }
+        
+        .route-option.current {
+            background: #fff5f5;
+            border-color: #ff6b6b;
+        }
+        
+        .route-option.optimized {
+            background: #f0fff4;
+            border-color: #27ae60;
+        }
+        
+        .route-option h5 {
+            margin: 0 0 15px 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .route-option.current h5 {
+            color: #e74c3c;
+        }
+        
+        .route-option.optimized h5 {
+            color: #27ae60;
+        }
+        
+        .metrics {
+            display: grid;
+            gap: 12px;
+        }
+        
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f3f5;
+        }
+        
+        .metric:last-child {
+            border-bottom: none;
+        }
+        
+        .metric .label {
+            font-weight: 500;
+            color: #6c757d;
+        }
+        
+        .metric .value {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .metric .value.eco {
+            color: #27ae60;
+        }
+        
+        .optimization-summary {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+        }
+        
+        .optimization-summary h4 {
+            margin: 0 0 20px 0;
+            color: #2c3e50;
+            font-size: 1.2rem;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .summary-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .summary-item .icon {
+            font-size: 1.2rem;
+        }
+        
+        .summary-item .text {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .environmental-impact {
+            margin-bottom: 30px;
+        }
+        
+        .environmental-impact h4 {
+            margin: 0 0 20px 0;
+            color: #2c3e50;
+            font-size: 1.2rem;
+        }
+        
+        .impact-bars {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .impact-item {
+            display: grid;
+            grid-template-columns: 120px 1fr auto;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .impact-item .label {
+            font-weight: 500;
+            color: #6c757d;
+        }
+        
+        .bar-container {
+            position: relative;
+            height: 25px;
+            background: #e9ecef;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .bar {
+            height: 100%;
+            border-radius: 12px;
+            transition: width 0.5s ease;
+        }
+        
+        .current-bar {
+            background: linear-gradient(90deg, #ff6b6b, #e74c3c);
+        }
+        
+        .optimized-bar {
+            background: linear-gradient(90deg, #27ae60, #16a085);
+        }
+        
+        .bar-value {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.9rem;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #27ae60 0%, #16a085 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        @media (max-width: 768px) {
+            .optimization-comparison {
+                grid-template-columns: 1fr;
+            }
+            
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .impact-item {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+        
+        .btn-small:hover {
+            opacity: 0.8;
+            transform: translateY(-1px);
+        }
+        
+        .map-preview {
+            height: 200px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #27ae60;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo-icon">🛣️</div>
+                    <h1>EcoTrack Supervisor</h1>
+                </div>
+                
+                <nav>
+                    <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+                    <ul>
+                        <li><a href="/supervisor-dashboard.html">Dashboard</a></li>
+                        <li><a href="/supervisor-parcels.html">Parcels</a></li>
+                        <li><a href="/supervisor-routes.html" class="active">Routes</a></li>
+                        <li><a href="/supervisor-tickets.html">Tickets</a></li>
+                    </ul>
+                </nav>
+                
+                <div class="user-section">
+                    <div class="user-info">
+                        <div class="user-avatar">S</div>
+                        <span id="userName">Loading...</span>
+                    </div>
+                    <button class="logout-btn" onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </header>
+        
+        <main>
+            <div id="status" role="status" aria-live="polite"></div>
+            
+            <section class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Active Routes</h2>
+                    <div class="card-icon">🚚</div>
+                </div>
+                <div id="routes-list">
+                    <div class="loading">Loading routes...</div>
+                </div>
+            </section>
+            
+            <section class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Route Statistics</h2>
+                    <div class="card-icon">📊</div>
+                </div>
+                <div class="stats-row" id="route-stats">
+                    <div class="stat-item">
+                        <div class="stat-value" id="active-routes">0</div>
+                        <div class="stat-label">Active Routes</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="completed-routes">0</div>
+                        <div class="stat-label">Completed Today</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="total-distance">0</div>
+                        <div class="stat-label">Total Distance (km)</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Get authentication token
+        const token = localStorage.getItem('ecotrack_token');
+        
+        // Check authentication
+        if (!token) {
+            alert('You must be logged in to access this page. Redirecting to login...');
+            window.location.href = '/login.html';
+        }
+        
+        // Sri Lankan city coordinates
+        const cityCoordinates = {
+            'Colombo': { lat: 6.9271, lng: 79.8612 },
+            'Kandy': { lat: 7.2906, lng: 80.6337 },
+            'Galle': { lat: 6.0535, lng: 80.2200 },
+            'Jaffna': { lat: 9.6615, lng: 80.0255 },
+            'Trincomalee': { lat: 8.5874, lng: 81.2152 },
+            'Batticaloa': { lat: 7.7102, lng: 81.6887 }
+        };
+
+        let routes = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadRoutes();
+            loadSampleRoutes();
+        });
+
+        function loadRoutes() {
+            const storedParcels = localStorage.getItem('ecotrack_parcels');
+            if (storedParcels) {
+                const parcels = JSON.parse(storedParcels);
+                routes = parcels.map(parcel => ({
+                    id: parcel.id,
+                    parcelId: parcel.id,
+                    pickupLocation: parcel.pickupLocation,
+                    deliveryLocation: parcel.deliveryLocation,
+                    driver: parcel.driver || 'Unassigned',
+                    status: parcel.status === 'delivered' ? 'completed' : 'active',
+                    recipientName: parcel.recipientName,
+                    recipientPhone: parcel.recipientPhone,
+                    priority: parcel.priority,
+                    createdAt: parcel.createdAt,
+                    estimatedDelivery: parcel.estimatedDelivery
+                }));
+                displayRoutes();
+                updateStats();
+            }
+        }
+
+        function loadSampleRoutes() {
+            if (routes.length === 0) {
+                routes = [
+                    {
+                        id: 'ROUTE-001',
+                        parcelId: 'PKG-2024-001',
+                        pickupLocation: 'Colombo',
+                        deliveryLocation: 'Kandy',
+                        driver: 'John Silva',
+                        status: 'active',
+                        recipientName: 'Ranjan Perera',
+                        recipientPhone: '+94-77-123-4567',
+                        priority: 'express',
+                        distance: 115.5,
+                        carbonFootprint: 21.9,
+                        estimatedTime: 2.5,
+                        createdAt: new Date('2024-01-10T08:00:00'),
+                        estimatedDelivery: new Date('2024-01-10T18:00:00')
+                    },
+                    {
+                        id: 'ROUTE-002',
+                        parcelId: 'PKG-2024-002',
+                        pickupLocation: 'Galle',
+                        deliveryLocation: 'Jaffna',
+                        driver: 'Kamal Perera',
+                        status: 'active',
+                        recipientName: 'Nalini Fernando',
+                        recipientPhone: '+94-71-987-6543',
+                        priority: 'normal',
+                        distance: 245.8,
+                        carbonFootprint: 46.7,
+                        estimatedTime: 5.2,
+                        createdAt: new Date('2024-01-10T09:30:00'),
+                        estimatedDelivery: new Date('2024-01-11T12:00:00')
+                    },
+                    {
+                        id: 'ROUTE-003',
+                        parcelId: 'PKG-2024-003',
+                        pickupLocation: 'Trincomalee',
+                        deliveryLocation: 'Batticaloa',
+                        driver: 'Unassigned',
+                        status: 'pending',
+                        recipientName: 'Sunil Bandara',
+                        recipientPhone: '+94-76-555-1234',
+                        priority: 'overnight',
+                        distance: 89.3,
+                        carbonFootprint: 16.9,
+                        estimatedTime: 1.8,
+                        createdAt: new Date('2024-01-10T10:00:00'),
+                        estimatedDelivery: new Date('2024-01-11T08:00:00')
+                    }
+                ];
+                displayRoutes();
+                updateStats();
+            }
+        }
+
+        function displayRoutes() {
+            const container = document.getElementById('routes-list');
+            
+            if (routes.length === 0) {
+                container.innerHTML = '<div class="text-center" style="padding: 40px; color: #666;">No routes found. Create parcels first to generate routes.</div>';
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="routes-grid">
+                    ${routes.map(route => createRouteCard(route)).join('')}
+                </div>
+            `;
+        }
+
+        function createRouteCard(route) {
+            const pickupCoords = cityCoordinates[route.pickupLocation] || { lat: 6.9271, lng: 79.8612 };
+            const deliveryCoords = cityCoordinates[route.deliveryLocation] || { lat: 7.2906, lng: 80.6337 };
+            
+            return `
+                <div class="route-card">
+                    <div class="route-header">
+                        <div class="route-id">${route.id}</div>
+                        <div class="route-status status-${route.status}">${route.status}</div>
+                    </div>
+                    
+                    <div class="route-info">
+                        <div class="info-item">
+                            <div class="info-label">📍 Pickup</div>
+                            <div class="info-value">${route.pickupLocation}</div>
+                            <div class="info-label" style="font-size: 10px; margin-top: 5px;">${pickupCoords.lat.toFixed(4)}, ${pickupCoords.lng.toFixed(4)}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">🎯 Delivery</div>
+                            <div class="info-value">${route.deliveryLocation}</div>
+                            <div class="info-label" style="font-size: 10px; margin-top: 5px;">${deliveryCoords.lat.toFixed(4)}, ${deliveryCoords.lng.toFixed(4)}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="driver-info">
+                        <div class="info-label">📦 Parcel</div>
+                        <div class="info-value">${route.parcelId}</div>
+                        <div class="info-label">👤 Recipient</div>
+                        <div class="info-value">${route.recipientName}</div>
+                        <div class="info-label">🚚 Driver</div>
+                        <div class="info-value">${route.driver}</div>
+                        <div class="info-label">📞 Phone</div>
+                        <div class="info-value">${route.recipientPhone}</div>
+                    </div>
+                    
+                    <div class="stats-row">
+                        <div class="stat-item">
+                            <div class="stat-value">${route.distance || 'N/A'}</div>
+                            <div class="stat-label">Distance (km)</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${route.estimatedTime || 'N/A'}</div>
+                            <div class="stat-label">Est. Time (h)</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${route.priority}</div>
+                            <div class="stat-label">Priority</div>
+                        </div>
+                    </div>
+                    
+                    <div class="map-preview">
+                        🗺️ Route: ${route.pickupLocation} → ${route.deliveryLocation}
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="btn-small btn-view" onclick="viewRouteOnMap('${route.parcelId}')">📍 View on Map</button>
+                        <button class="btn-small btn-optimize" onclick="optimizeRoute('${route.id}')">🚀 Optimize</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateStats() {
+            const activeRoutes = routes.filter(r => r.status === 'active').length;
+            const completedRoutes = routes.filter(r => r.status === 'completed').length;
+            const totalDistance = routes.reduce((sum, r) => sum + (r.distance || 0), 0);
+
+            document.getElementById('active-routes').textContent = activeRoutes;
+            document.getElementById('completed-routes').textContent = completedRoutes;
+            document.getElementById('total-distance').textContent = totalDistance.toFixed(1);
+        }
+
+        function viewRouteOnMap(parcelId) {
+            // Store parcel ID for tracking
+            localStorage.setItem('tracking_parcel_id', parcelId);
+            window.location.href = '/map-osm-demo-fixed.html';
+        }
+
+        function optimizeRoute(routeId) {
+            const route = routes.find(r => r.id === routeId);
+            if (!route) {
+                showStatus('Route not found', true);
+                return;
+            }
+
+            // Debug: Check token
+            console.log('Token:', token);
+            console.log('Token exists:', !!token);
+            console.log('Token length:', token ? token.length : 'N/A');
+
+            if (!token) {
+                showStatus('Authentication required. Please login again.', true);
+                setTimeout(() => {
+                    window.location.href = '/login.html';
+                }, 2000);
+                return;
+            }
+
+            showStatus('Optimizing route...');
+            
+            // Call backend API for route optimization
+            fetch('http://localhost:3000/api/route-optimization/optimize', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    pickup: route.pickupLocation,
+                    delivery: route.deliveryLocation,
+                    options: {
+                        vehicleType: 'medium',
+                        fuelType: 'hybrid',
+                        includeTraffic: true,
+                        timeOfDay: 'current',
+                        cargoWeight: 1000
+                    }
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showOptimizationResults(route, data.data);
+                } else {
+                    showStatus('Optimization failed', true);
+                }
+            })
+            .catch(error => {
+                console.error('Error optimizing route:', error);
+                showStatus('Network error during optimization', true);
+            });
+        }
+
+        function showOptimizationResults(route, optimizationData) {
+            const modal = document.createElement('div');
+            modal.className = 'optimization-modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>🚀 Route Optimization Results</h3>
+                        <button class="close-btn" onclick="closeOptimizationModal()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="route-info">
+                            <h4>📍 Route: ${route.pickupLocation} → ${route.deliveryLocation}</h4>
+                        </div>
+                        
+                        <div class="optimization-comparison">
+                            <div class="route-option current">
+                                <h5>🛣️ Current Route</h5>
+                                <div class="metrics">
+                                    <div class="metric">
+                                        <span class="label">Distance:</span>
+                                        <span class="value">${route.distance || 'N/A'} km</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="label">Carbon Footprint:</span>
+                                        <span class="value">${route.carbonFootprint || 'N/A'} kg CO₂</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="label">Estimated Time:</span>
+                                        <span class="value">${route.estimatedTime || 'N/A'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="route-option optimized">
+                                <h5>✨ Optimized Route</h5>
+                                <div class="metrics">
+                                    <div class="metric">
+                                        <span class="label">Distance:</span>
+                                        <span class="value">${optimizationData.distance?.toFixed(1) || 'N/A'} km</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="label">Carbon Footprint:</span>
+                                        <span class="value eco">${optimizationData.carbonFootprint?.toFixed(2) || 'N/A'} kg CO₂</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="label">Estimated Time:</span>
+                                        <span class="value">${optimizationData.duration?.toFixed(0) || 'N/A'} min</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="label">Fuel Efficiency:</span>
+                                        <span class="value">${optimizationData.fuelEfficiency?.toFixed(1) || 'N/A'} km/l</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="optimization-summary">
+                            <h4>📊 Optimization Summary</h4>
+                            <div class="summary-grid">
+                                <div class="summary-item">
+                                    <span class="icon">📏</span>
+                                    <span class="text">Distance Saved: ${optimizationData.distanceSaved?.toFixed(1) || '0'} km</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="icon">🌱</span>
+                                    <span class="text">CO₂ Reduced: ${optimizationData.carbonReduced?.toFixed(2) || '0'} kg</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="icon">⏱️</span>
+                                    <span class="text">Time Saved: ${optimizationData.timeSaved?.toFixed(0) || '0'} min</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="icon">💰</span>
+                                    <span class="text">Cost Savings: $${optimizationData.costSavings?.toFixed(2) || '0'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="environmental-impact">
+                            <h4>🌍 Environmental Impact</h4>
+                            <div class="impact-bars">
+                                <div class="impact-item">
+                                    <span class="label">Current Route:</span>
+                                    <div class="bar-container">
+                                        <div class="bar current-bar" style="width: ${route.carbonFootprint ? Math.min(route.carbonFootprint * 10, 100) : 20}%"></div>
+                                        <span class="bar-value">${route.carbonFootprint || 'N/A'} kg CO₂</span>
+                                    </div>
+                                </div>
+                                <div class="impact-item">
+                                    <span class="label">Optimized Route:</span>
+                                    <div class="bar-container">
+                                        <div class="bar optimized-bar" style="width: ${optimizationData.carbonFootprint ? Math.min(optimizationData.carbonFootprint * 10, 100) : 15}%"></div>
+                                        <span class="bar-value">${optimizationData.carbonFootprint?.toFixed(2) || 'N/A'} kg CO₂</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <button class="btn-primary" onclick="applyOptimization('${route.id}')">Apply Optimization</button>
+                            <button class="btn-secondary" onclick="closeOptimizationModal()">Close</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            showStatus('Route optimization completed successfully!');
+        }
+
+        function closeOptimizationModal() {
+            const modal = document.querySelector('.optimization-modal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        function applyOptimization(routeId) {
+            showStatus('Applying route optimization...');
+            // Here you would update the route in the database
+            setTimeout(() => {
+                showStatus('Route optimization applied successfully!');
+                closeOptimizationModal();
+                // Refresh routes
+                loadRoutes();
+            }, 1000);
+        }
+
+        function showStatus(message, isError = false) {
+            const statusEl = document.getElementById('status');
+            if (!statusEl) {
+                console.log(message);
+                return;
+            }
+            statusEl.innerHTML = `
+                <div style="padding: 15px; border-radius: 8px; margin: 20px 0; ${
+                    isError ? 'background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;' 
+                    : 'background: #d4edda; color: #155724; border: 1px solid #c3e6cb;'
+                }">
+                    ${message}
+                </div>
+            `;
+            setTimeout(() => {
+                statusEl.innerHTML = '';
+            }, 5000);
+        }
+
+        function renderStatus(message, isError = false) {
+            const statusEl = document.getElementById('status');
+            statusEl.innerHTML = `
+                <div style="padding: 15px; border-radius: 8px; margin: 20px 0; ${
+                    isError ? 'background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;' 
+                    : 'background: #d4edda; color: #155724; border: 1px solid #c3e6cb;'
+                }">
+                    ${message}
+                </div>
+            `;
+            setTimeout(() => {
+                statusEl.innerHTML = '';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

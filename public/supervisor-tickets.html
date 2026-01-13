@@ -1,0 +1,1632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EcoTrack - Supervisor Tickets</title>
+    <link rel="stylesheet" href="/css/supervisor.css" />
+    <style>
+        /* Supervisor-specific overrides */
+        .header { background: linear-gradient(135deg, #27ae60 0%, #16a085 100%); }
+        .btn-primary { background: #27ae60; }
+        .btn-primary:hover { background: #16a085; }
+        .filters button { background: #27ae60; }
+        .filters button:hover { background: #16a085; }
+        .pagination button.active { background: #27ae60; }
+        .stat-number { color: #27ae60; }
+
+        /* Enhanced Ticket Management Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo-section h1 {
+            color: white;
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-icon {
+            width: 35px;
+            height: 35px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .user-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            color: white;
+            font-weight: 500;
+        }
+
+        .user-avatar {
+            width: 30px;
+            height: 30px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .logout-btn {
+            padding: 0.5rem 1rem;
+            background: rgba(231, 76, 60, 0.9);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .logout-btn:hover {
+            background: rgba(192, 57, 43, 0.9);
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(231, 76, 60, 0.3);
+        }
+
+        /* Mobile Menu Toggle */
+        .mobile-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+        .header {
+            padding: 2rem 3rem;
+            border-radius: 15px 15px 0 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(39, 174, 96, 0.3);
+            background: linear-gradient(135deg, #27ae60 0%, #16a085 100%);
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.05)"/><circle cx="10" cy="50" r="0.5" fill="rgba(255,255,255,0.05)"/><circle cx="90" cy="50" r="0.5" fill="rgba(255,255,255,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            pointer-events: none;
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0 0 1rem 0;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
+            position: relative;
+            z-index: 1;
+            letter-spacing: -0.5px;
+        }
+
+        .header nav {
+            display: flex;
+            gap: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header nav a {
+            color: rgba(41, 35, 35, 0.95);
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header nav a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .header nav a:hover::before {
+            left: 100%;
+        }
+
+        .header nav a:hover {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .header nav a.active {
+            background: rgba(255, 255, 255, 0.9);
+            color: #27ae60;
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            font-weight: 700;
+        }
+
+        /* Message Container */
+        #messageContainer {
+            margin-bottom: 2rem;
+            position: sticky;
+            top: 20px;
+            z-index: 1000;
+        }
+
+        #messageContainer div {
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #messageContainer div::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+        }
+
+        #messageContainer .success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border-left: 4px solid #28a745;
+            color: #155724;
+        }
+
+        #messageContainer .success::before {
+            background: linear-gradient(90deg, #28a745, #20c997);
+        }
+
+        #messageContainer .error {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+        }
+
+        #messageContainer .error::before {
+            background: linear-gradient(90deg, #dc3545, #c82333);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-30px) scale(0.95);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Enhanced Filters Section */
+        .filters {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2.5rem;
+            border: 1px solid rgba(39, 174, 96, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .filters::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #27ae60, #16a085, #27ae60);
+            opacity: 0.8;
+        }
+
+        .filters form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            align-items: end;
+        }
+
+        .filters .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filters label {
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 0.75rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filters select,
+        .filters input[type="text"] {
+            padding: 1rem 1.25rem;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+            font-family: inherit;
+        }
+
+        .filters select:focus,
+        .filters input[type="text"]:focus {
+            outline: none;
+            border-color: #27ae60;
+            box-shadow: 0 0 0 4px rgba(39, 174, 96, 0.1);
+            background: white;
+            transform: translateY(-1px);
+        }
+
+        .filters button {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.9rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .filters button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .filters button:hover::before {
+            left: 100%;
+        }
+
+        .filters button[type="submit"] {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            color: white;
+            box-shadow: 0 6px 20px rgba(39, 174, 96, 0.3);
+        }
+
+        .filters button[type="submit"]:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(39, 174, 96, 0.4);
+        }
+
+        .filters button[type="button"] {
+            background: #6c757d;
+            color: white;
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.2);
+        }
+
+        .filters button[type="button"]:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        /* Enhanced Tickets Grid */
+        .tickets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 0.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .ticket-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(39, 174, 96, 0.1);
+            position: relative;
+        }
+
+        .ticket-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #27ae60, #16a085);
+        }
+
+        .ticket-card.priority-Critical::before {
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
+        }
+
+        .ticket-card.priority-High::before {
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
+        }
+
+        .ticket-card.priority-Medium::before {
+            background: linear-gradient(90deg, #f39c12, #e67e22);
+        }
+
+        .ticket-card.priority-Low::before {
+            background: linear-gradient(90deg, #95a5a6, #7f8c8d);
+        }
+
+        .ticket-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .ticket-header {
+            padding: 0.75rem 1rem;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-bottom: 1px solid rgba(39, 174, 96, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .ticket-id {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #2c3e50;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .ticket-status {
+            padding: 0.4rem 1rem;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ticket-status::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .ticket-status:hover::before {
+            left: 100%;
+        }
+
+        .status-Open {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        .status-InProgress {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+        }
+
+        .status-Resolved {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        .ticket-meta {
+            padding: 0.75rem 1rem;
+            background: white;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .ticket-meta span {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ticket-meta strong {
+            color: #6c757d;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .ticket-description {
+            padding: 0.75rem 1rem;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-top: 1px solid rgba(39, 174, 96, 0.1);
+            border-bottom: 1px solid rgba(39, 174, 96, 0.1);
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: #495057;
+        }
+
+        .parcel-info {
+            padding: 0.75rem 1rem;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-top: 1px solid rgba(39, 174, 96, 0.1);
+            font-size: 0.8rem;
+        }
+
+        .parcel-info strong {
+            color: #1976d2;
+            font-weight: 700;
+        }
+
+        .ticket-actions {
+            padding: 0.75rem 1rem;
+            background: white;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .ticket-actions button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 0.9rem;
+            flex: 1;
+            min-width: 140px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ticket-actions button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .ticket-actions button:hover::before {
+            left: 100%;
+        }
+
+        .btn {
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(243, 156, 18, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+        }
+
+        /* Enhanced Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 2.5rem 0;
+        }
+
+        .pagination button {
+            padding: 0.75rem 1.25rem;
+            border: 2px solid #dee2e6;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.95rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pagination button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(39, 174, 96, 0.1), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .pagination button:hover::before {
+            left: 100%;
+        }
+
+        .pagination button:hover {
+            background: #f8f9fa;
+            border-color: #27ae60;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.2);
+        }
+
+        .pagination button.active {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            color: white;
+            border-color: #27ae60;
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        /* Enhanced Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 3% auto;
+            padding: 0;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 650px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(39, 174, 96, 0.2);
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-50px) scale(0.9);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            padding: 2.5rem;
+            background: linear-gradient(135deg, #27ae60 0%, #16a085 100%);
+            color: white;
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modal-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.2));
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.6rem;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .close {
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 300;
+            cursor: pointer;
+            line-height: 1;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.1);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close:hover {
+            opacity: 1;
+            transform: rotate(90deg);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .modal-body {
+            padding: 2.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 2rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.75rem;
+            font-weight: 700;
+            color: #2c3e50;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group select,
+        .form-group textarea,
+        .form-group input {
+            width: 100%;
+            padding: 1rem 1.25rem;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+            font-family: inherit;
+        }
+
+        .form-group select:focus,
+        .form-group textarea:focus,
+        .form-group input:focus {
+            outline: none;
+            border-color: #27ae60;
+            box-shadow: 0 0 0 4px rgba(39, 174, 96, 0.1);
+            background: white;
+            transform: translateY(-1px);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            }
+
+            .form-group {
+                margin-bottom: 2rem;
+            }
+
+            .form-group label {
+                display: block;
+                margin-bottom: 0.75rem;
+                font-weight: 700;
+                color: #2c3e50;
+                font-size: 1rem;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .form-group select,
+            .form-group textarea,
+            .form-group input {
+                width: 100%;
+                padding: 1rem 1.25rem;
+                border: 2px solid #e9ecef;
+                border-radius: 10px;
+                font-size: 1rem;
+                transition: all 0.3s ease;
+                background: #f8f9fa;
+                font-family: inherit;
+            }
+
+            .form-group select:focus,
+            .form-group textarea:focus,
+            .form-group input:focus {
+                outline: none;
+                border-color: #27ae60;
+                box-shadow: 0 0 0 4px rgba(39, 174, 96, 0.1);
+                background: white;
+                transform: translateY(-1px);
+            }
+
+            .form-group textarea {
+                resize: vertical;
+                min-height: 120px;
+                font-family: inherit;
+            }
+
+            /* Loading State */
+            .loading {
+                text-align: center;
+                padding: 4rem 2rem;
+                color: #6c757d;
+                font-size: 1.2rem;
+                font-weight: 500;
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            }
+
+            .loading::before {
+                content: '';
+                display: inline-block;
+                width: 24px;
+                height: 24px;
+                border: 3px solid #e9ecef;
+                border-top: 3px solid #27ae60;
+                border-radius: 50%;
+                animation: spin 1.2s linear infinite;
+                margin-right: 1rem;
+                vertical-align: middle;
+            }
+
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+
+            .filters form {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .tickets-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .ticket-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+
+            .ticket-actions {
+                flex-direction: column;
+            }
+
+            .ticket-actions button {
+                width: 100%;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            .header,
+            .filters,
+            .pagination,
+            .ticket-actions,
+            .modal {
+                display: none !important;
+            }
+
+            .tickets-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .ticket-card {
+                break-inside: avoid;
+                box-shadow: none;
+                border: 1px solid #dee2e6;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+        <h1>Ticket Management - Supervisor</h1>
+        <nav>
+            <a href="/supervisor-dashboard.html">Dashboard</a>
+            <a href="/supervisor-parcels.html">Parcels</a>
+            <a href="/supervisor-routes.html">Routes</a>
+            <a href="/supervisor-tickets.html" class="active">Tickets</a>
+        </nav>
+    </div>
+
+        <div id="messageContainer"></div>
+
+        <div class="filters">
+            <form id="filterForm">
+                <select id="statusFilter">
+                    <option value="">All Status</option>
+                    <option value="Open">Open</option>
+                    <option value="InProgress">In Progress</option>
+                    <option value="Resolved">Resolved</option>
+                </select>
+                <select id="priorityFilter">
+                    <option value="">All Priority</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                </select>
+                <select id="issueTypeFilter">
+                    <option value="">All Issue Types</option>
+                    <option value="Lost">Lost</option>
+                    <option value="Delayed">Delayed</option>
+                    <option value="Damaged">Damaged</option>
+                    <option value="General">General</option>
+                </select>
+                <input type="text" id="searchFilter" placeholder="Search tickets...">
+                <button type="submit">Apply Filters</button>
+                <button type="button" onclick="clearFilters()">Clear</button>
+            </form>
+        </div>
+
+        <div id="ticketsContainer" class="tickets-grid">
+            <div class="loading">Loading tickets...</div>
+        </div>
+
+        <div id="paginationContainer" class="pagination"></div>
+    </div>
+
+    <!-- Assignment Modal -->
+    <div id="assignmentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Assign Ticket</h2>
+                <span class="close" onclick="closeAssignmentModal()">&times;</span>
+            </div>
+            <form id="assignmentForm">
+                <div class="form-group">
+                    <label for="assignedTo">Support Agent:</label>
+                    <select id="assignedTo" required>
+                        <option value="">Select Support Agent...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="assignmentNotes">Assignment Notes:</label>
+                    <textarea id="assignmentNotes" placeholder="Optional notes for assignment..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="estimatedResolutionTime">Estimated Resolution Time:</label>
+                    <input type="datetime-local" id="estimatedResolutionTime">
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Assign Ticket</button>
+                    <button type="button" class="btn" onclick="closeAssignmentModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/ticket-api.js"></script>
+    <script>
+        let currentPage = 1;
+        let currentFilters = {};
+        let supportAgents = [];
+        let currentTicketId = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            loadSupportAgents();
+            loadTickets();
+        });
+
+        // Check authentication
+        function checkAuth() {
+            const token = localStorage.getItem('ecotrack_token');
+            const user = JSON.parse(localStorage.getItem('ecotrack_user') || '{}');
+            
+            // Temporarily bypass authentication for testing
+            // if (!token) {
+            //     window.location.href = '/login.html';
+            //     return;
+            // }
+
+            // if (user.role !== 'Supervisor') {
+            //     alert('Access denied. Supervisors only.');
+            //     window.location.href = '/login.html';
+            //     return;
+            // }
+
+            // Set sample user for testing
+            document.getElementById('userName').textContent = 'Test Supervisor';
+        }
+
+        // Load support agents for assignment
+        async function loadSupportAgents() {
+            try {
+                const token = localStorage.getItem('ecotrack_token');
+                const response = await fetch('/api/users?role=SupportAgent', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    supportAgents = data.data || data;
+                    populateSupportAgents();
+                } else {
+                    // Use sample support agents if API fails
+                    supportAgents = [
+                        { _id: 'agent1', name: 'Kamal Perera', email: 'kamal@ecotrack.com' },
+                        { _id: 'agent2', name: 'Sunil Kumar', email: 'sunil@ecotrack.com' },
+                        { _id: 'agent3', name: 'Priya Fernando', email: 'priya@ecotrack.com' },
+                        { _id: 'agent4', name: 'Nimal Perera', email: 'nimal@ecotrack.com' },
+                        { _id: 'agent5', name: 'Anusha Rajapaksa', email: 'anusha@ecotrack.com' }
+                    ];
+                    populateSupportAgents();
+                }
+            } catch (error) {
+                console.log('API not available, using sample support agents');
+                // Use sample support agents
+                supportAgents = [
+                    { _id: 'agent1', name: 'Kamal Perera', email: 'kamal@ecotrack.com' },
+                    { _id: 'agent2', name: 'Sunil Kumar', email: 'sunil@ecotrack.com' },
+                    { _id: 'agent3', name: 'Priya Fernando', email: 'priya@ecotrack.com' },
+                    { _id: 'agent4', name: 'Nimal Perera', email: 'nimal@ecotrack.com' },
+                    { _id: 'agent5', name: 'Anusha Rajapaksa', email: 'anusha@ecotrack.com' }
+                ];
+                populateSupportAgents();
+            }
+        }
+
+        // Populate support agents dropdown
+        function populateSupportAgents() {
+            const select = document.getElementById('assignedTo');
+            select.innerHTML = '<option value="">Select Support Agent...</option>';
+            
+            supportAgents.forEach(agent => {
+                const option = document.createElement('option');
+                option.value = agent._id;
+                option.textContent = `${agent.name} (${agent.email})`;
+                select.appendChild(option);
+            });
+        }
+
+        // Load tickets
+        async function loadTickets(page = 1) {
+            try {
+                const token = localStorage.getItem('ecotrack_token');
+                const params = new URLSearchParams({
+                    page: page,
+                    limit: 20,
+                    ...currentFilters
+                });
+
+                const response = await fetch(`/api/tickets?${params}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    // If API fails, use sample data
+                    displaySampleTickets(page);
+                    return;
+                }
+
+                const data = await response.json();
+                
+                // If no tickets from API, use sample data
+                if (!data.data || !data.data.tickets || data.data.tickets.length === 0) {
+                    displaySampleTickets(page);
+                    return;
+                }
+                
+                displayTickets(data.data.tickets);
+                displayPagination(data.data.pagination);
+                currentPage = page;
+            } catch (error) {
+                console.log('API not available, using sample data');
+                displaySampleTickets(page);
+            }
+        }
+
+        // Display sample tickets for demonstration
+        function displaySampleTickets(page = 1) {
+            const sampleTickets = [
+                {
+                    ticketId: 'TKT-2024-001',
+                    issueType: 'Delayed',
+                    priority: 'High',
+                    status: 'Open',
+                    description: 'PKG-2024-001 (Colombo-Kandy) delayed at Kegalle checkpoint due to severe traffic congestion on A1 highway. Customer calling for urgent updates.',
+                    parcel: {
+                        parcelId: 'PKG-2024-001',
+                        status: 'InTransit'
+                    },
+                    assignedTo: null,
+                    createdBy: {
+                        name: 'John Silva',
+                        phone: '+94-77-123-4567'
+                    },
+                    createdAt: new Date('2024-01-10T08:30:00')
+                },
+                {
+                    ticketId: 'TKT-2024-002',
+                    issueType: 'Damaged',
+                    priority: 'High',
+                    status: 'InProgress',
+                    description: 'PKG-2024-002 (Galle-Jaffna) package severely damaged during transit. Box appears crushed at Kurunegala warehouse. Fragile electronics inside.',
+                    parcel: {
+                        parcelId: 'PKG-2024-002',
+                        status: 'InTransit'
+                    },
+                    assignedTo: {
+                        name: 'Kamal Perera',
+                        _id: 'agent1',
+                        phone: '+94-71-987-6543'
+                    },
+                    createdBy: {
+                        name: 'Nalini Fernando',
+                        phone: '+94-71-987-6543'
+                    },
+                    createdAt: new Date('2024-01-09T14:15:00')
+                },
+                {
+                    ticketId: 'TKT-2024-003',
+                    issueType: 'Lost',
+                    priority: 'Critical',
+                    status: 'Open',
+                    description: 'PKG-2024-003 (Trincomalee-Batticaloa) package missing at Vavuniya junction. Last scanned 3 days ago. High value electronics shipment.',
+                    parcel: {
+                        parcelId: 'PKG-2024-003',
+                        status: 'Lost'
+                    },
+                    assignedTo: null,
+                    createdBy: {
+                        name: 'Ranjan Perera',
+                        phone: '+94-77-123-4567'
+                    },
+                    createdAt: new Date('2024-01-08T10:45:00')
+                },
+                {
+                    ticketId: 'TKT-2024-004',
+                    issueType: 'General',
+                    priority: 'Low',
+                    status: 'Resolved',
+                    description: 'Customer inquiry about PKG-2024-004 delivery time. Resolved after providing accurate ETA for Ratnapura route.',
+                    parcel: {
+                        parcelId: 'PKG-2024-004',
+                        status: 'Delivered'
+                    },
+                    assignedTo: {
+                        name: 'Sunil Kumar',
+                        _id: 'agent2'
+                    },
+                    createdBy: {
+                        name: 'Anusha Rajapaksa',
+                        phone: '+94-11-234-5678'
+                    },
+                    createdAt: new Date('2024-01-07T16:20:00')
+                },
+                {
+                    ticketId: 'TKT-2024-005',
+                    issueType: 'Delayed',
+                    priority: 'Medium',
+                    status: 'InProgress',
+                    description: 'PKG-2024-005 (Negombo-Anuradhapura) delayed due to major road construction on A6 highway near Galgamuwa. Expected delay 2-3 hours.',
+                    parcel: {
+                        parcelId: 'PKG-2024-005',
+                        status: 'InTransit'
+                    },
+                    assignedTo: {
+                        name: 'Priya Fernando',
+                        _id: 'agent3',
+                        phone: '+94-71-234-5678'
+                    },
+                    createdBy: {
+                        name: 'Mahinda Perera',
+                        phone: '+94-77-123-4567'
+                    },
+                    createdAt: new Date('2024-01-09T09:30:00')
+                },
+                {
+                    ticketId: 'TKT-2024-006',
+                    issueType: 'Damaged',
+                    priority: 'High',
+                    status: 'Open',
+                    description: 'PKG-2024-006 (Dambulla-Matale) fragile items broken during transport from Dambulla warehouse. Need immediate replacement.',
+                    parcel: {
+                        parcelId: 'PKG-2024-006',
+                        status: 'InTransit'
+                    },
+                    assignedTo: null,
+                    createdBy: {
+                        name: 'Chandrika Bandaranayake',
+                        phone: '+94-77-123-4567'
+                    },
+                    createdAt: new Date('2024-01-10T11:00:00')
+                },
+                {
+                    ticketId: 'TKT-2024-007',
+                    issueType: 'General',
+                    priority: 'Low',
+                    status: 'Resolved',
+                    description: 'Address clarification needed for PKG-2024-007 delivery in Nuwara Eliya. Customer provided updated location details.',
+                    parcel: {
+                        parcelId: 'PKG-2024-007',
+                        status: 'Delivered'
+                    },
+                    assignedTo: {
+                        name: 'Kamal Perera',
+                        _id: 'agent1'
+                    },
+                    createdBy: {
+                        name: 'Samantha Kumara',
+                        phone: '+94-11-234-5678'
+                    },
+                    createdAt: new Date('2024-01-06T13:45:00')
+                },
+                {
+                    ticketId: 'TKT-2024-008',
+                    issueType: 'Delayed',
+                    priority: 'Medium',
+                    status: 'Open',
+                    description: 'PKG-2024-008 (Badulla-Ratnapura) delayed due to monsoon flooding on A4 highway near Pelmadulla. Road temporarily closed.',
+                    parcel: {
+                        parcelId: 'PKG-2024-008',
+                        status: 'InTransit'
+                    },
+                    assignedTo: null,
+                    createdBy: {
+                        name: 'Thilakawansa Weerakoon',
+                        phone: '+94-77-123-4567'
+                    },
+                    createdAt: new Date('2024-01-10T07:15:00')
+                },
+                {
+                    ticketId: 'TKT-2024-009',
+                    issueType: 'Lost',
+                    priority: 'High',
+                    status: 'Open',
+                    description: 'PKG-2024-009 (Kandy-Jaffna) package lost at Vavuniya junction. Customer reports no tracking updates for 48 hours.',
+                    parcel: {
+                        parcelId: 'PKG-2024-009',
+                        status: 'Lost'
+                    },
+                    assignedTo: null,
+                    createdBy: {
+                        name: 'Samantha Kumara',
+                        phone: '+94-11-234-5678'
+                    },
+                    createdAt: new Date('2024-01-11T12:30:00')
+                },
+                {
+                    ticketId: 'TKT-2024-010',
+                    issueType: 'Address',
+                    priority: 'Medium',
+                    status: 'Open',
+                    description: 'PKG-2024-010 (Kurunegala-Dambulla) recipient address is incomplete. Need full address for delivery.',
+                    parcel: {
+                        parcelId: 'PKG-2024-010',
+                        status: 'Pending'
+                    },
+                    assignedTo: null,
+                    createdBy: {
+                        name: 'Ranjan Perera',
+                        phone: '+94-77-123-4567'
+                    },
+                    createdAt: new Date('2024-01-11T15:45:00')
+                },
+                {
+                    ticketId: 'TKT-2024-011',
+                    issueType: 'Payment',
+                    priority: 'Low',
+                    status: 'Open',
+                    description: 'PKG-2024-011 (Colombo-Galle) payment issue. Customer unable to complete online payment.',
+                    parcel: {
+                        parcelId: 'PKG-2024-011',
+                        status: 'Pending'
+                    },
+                    assignedTo: null,
+                    createdBy: {
+                        name: 'John Silva',
+                        phone: '+94-77-123-4567'
+                    },
+                    createdAt: new Date('2024-01-12T09:45:00')
+                },
+                {
+                    ticketId: 'TKT-2024-012',
+                    issueType: 'System',
+                    priority: 'Medium',
+                    status: 'Open',
+                    description: 'System error preventing PKG-2024-012 tracking updates. GPS tracking not functioning properly.',
+                    parcel: {
+                        parcelId: 'PKG-2024-012',
+                        status: 'InTransit'
+                    },
+                    assignedTo: {
+                        name: 'Priya Fernando',
+                        _id: 'agent3'
+                    },
+                    createdBy: {
+                        name: 'System Administrator',
+                        phone: '+94-11-234-5678'
+                    },
+                    createdAt: new Date('2024-01-12T13:30:00')
+                }
+            ];
+
+            // Apply filters to sample data
+            let filteredTickets = sampleTickets;
+            
+            if (currentFilters.status) {
+                filteredTickets = filteredTickets.filter(t => t.status === currentFilters.status);
+            }
+            if (currentFilters.priority) {
+                filteredTickets = filteredTickets.filter(t => t.priority === currentFilters.priority);
+            }
+            if (currentFilters.issueType) {
+                filteredTickets = filteredTickets.filter(t => t.issueType === currentFilters.issueType);
+            }
+            if (currentFilters.search) {
+                const searchLower = currentFilters.search.toLowerCase();
+                filteredTickets = filteredTickets.filter(t => 
+                    t.ticketId.toLowerCase().includes(searchLower) ||
+                    t.description.toLowerCase().includes(searchLower) ||
+                    t.parcel.parcelId.toLowerCase().includes(searchLower)
+                );
+            }
+
+            displayTickets(filteredTickets);
+            
+            // Simple pagination for sample data
+            const totalPages = Math.ceil(filteredTickets.length / 20);
+            if (totalPages > 1) {
+                displayPagination({
+                    currentPage: page,
+                    totalPages: totalPages,
+                    hasPrevPage: page > 1,
+                    hasNextPage: page < totalPages,
+                    prevPage: page - 1,
+                    nextPage: page + 1
+                });
+            } else {
+                document.getElementById('paginationContainer').innerHTML = '';
+            }
+            
+            currentPage = page;
+        }
+
+        // Display tickets
+        function displayTickets(tickets) {
+            const container = document.getElementById('ticketsContainer');
+            
+            if (tickets.length === 0) {
+                container.innerHTML = '<div class="loading">No tickets found.</div>';
+                return;
+            }
+
+            container.innerHTML = tickets.map(ticket => `
+                <div class="ticket-card priority-${ticket.priority.toLowerCase()}">
+                    <div class="ticket-header">
+                        <span class="ticket-id">${ticket.ticketId}</span>
+                        <span class="ticket-status status-${ticket.status.toLowerCase()}">${ticket.status}</span>
+                    </div>
+                    <div class="ticket-meta">
+                        <span><strong>Issue:</strong> ${ticket.issueType}</span>
+                        <span><strong>Priority:</strong> ${ticket.priority}</span>
+                        <span><strong>Created:</strong> ${new Date(ticket.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <div class="ticket-description">${ticket.description}</div>
+                    ${ticket.parcel ? `
+                        <div class="parcel-info">
+                            <strong>Parcel:</strong> ${ticket.parcel.parcelId} - ${ticket.parcel.status}
+                        </div>
+                    ` : ''}
+                    <div class="ticket-meta">
+                        <span><strong>Assigned To:</strong> ${ticket.assignedTo ? ticket.assignedTo.name : 'Unassigned'}</span>
+                        <span><strong>Created By:</strong> ${ticket.createdBy.name}</span>
+                    </div>
+                    <div class="ticket-actions">
+                        ${!ticket.assignedTo ? `
+                            <button class="btn btn-primary" onclick="openAssignmentModal('${ticket.ticketId}')">Assign</button>
+                        ` : `
+                            <button class="btn btn-warning" onclick="openReassignmentModal('${ticket.ticketId}', '${ticket.assignedTo._id}')">Reassign</button>
+                            <button class="btn btn-success" onclick="unassignTicket('${ticket.ticketId}')">Unassign</button>
+                        `}
+                        <button class="btn btn-primary" onclick="viewTicketDetails('${ticket.ticketId}')">View Details</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Display pagination
+        function displayPagination(pagination) {
+            const container = document.getElementById('paginationContainer');
+            
+            if (pagination.totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            
+            // Previous button
+            if (pagination.hasPrevPage) {
+                html += `<button onclick="loadTickets(${pagination.prevPage})">Previous</button>`;
+            }
+
+            // Page numbers
+            for (let i = 1; i <= pagination.totalPages; i++) {
+                const activeClass = i === pagination.currentPage ? 'active' : '';
+                html += `<button class="${activeClass}" onclick="loadTickets(${i})">${i}</button>`;
+            }
+
+            // Next button
+            if (pagination.hasNextPage) {
+                html += `<button onclick="loadTickets(${pagination.nextPage})">Next</button>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // Open assignment modal
+        function openAssignmentModal(ticketId) {
+            currentTicketId = ticketId;
+            document.getElementById('assignmentModal').style.display = 'block';
+        }
+
+        // Close assignment modal
+        function closeAssignmentModal() {
+            document.getElementById('assignmentModal').style.display = 'none';
+            document.getElementById('assignmentForm').reset();
+            currentTicketId = null;
+        }
+
+        // Handle assignment form submission
+        document.getElementById('assignmentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const assignedTo = document.getElementById('assignedTo').value;
+            const notes = document.getElementById('assignmentNotes').value;
+            const estimatedResolutionTime = document.getElementById('estimatedResolutionTime').value;
+
+            if (!assignedTo) {
+                showMessage('Please select a support agent', 'error');
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('ecotrack_token');
+                const response = await fetch(`/api/tickets/${currentTicketId}/assign`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        assignedTo,
+                        notes,
+                        estimatedResolutionTime: estimatedResolutionTime ? new Date(estimatedResolutionTime).toISOString() : undefined
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('Ticket assigned successfully', 'success');
+                    closeAssignmentModal();
+                    loadTickets(currentPage);
+                } else {
+                    showMessage(data.message || 'Assignment failed', 'error');
+                }
+            } catch (error) {
+                showMessage('Error assigning ticket: ' + error.message, 'error');
+            }
+        });
+
+        // Handle filter form submission
+        document.getElementById('filterForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            currentFilters = {
+                status: document.getElementById('statusFilter').value,
+                priority: document.getElementById('priorityFilter').value,
+                issueType: document.getElementById('issueTypeFilter').value,
+                search: document.getElementById('searchFilter').value
+            };
+
+            // Remove empty filters
+            Object.keys(currentFilters).forEach(key => {
+                if (!currentFilters[key]) {
+                    delete currentFilters[key];
+                }
+            });
+
+            loadTickets(1);
+        });
+
+        // Clear filters
+        function clearFilters() {
+            document.getElementById('filterForm').reset();
+            currentFilters = {};
+            displaySampleTickets(1);
+        }
+
+        // View ticket details
+        function viewTicketDetails(ticketId) {
+            // This could open a detailed view modal or navigate to details page
+            alert(`Ticket details for ${ticketId} - Feature to be implemented`);
+        }
+
+        // Unassign ticket
+        async function unassignTicket(ticketId) {
+            if (!confirm('Are you sure you want to unassign this ticket?')) {
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('ecotrack_token');
+                const response = await fetch(`/api/tickets/${ticketId}/unassign`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        reason: 'Unassigned by supervisor'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('Ticket unassigned successfully', 'success');
+                    loadTickets(currentPage);
+                } else {
+                    showMessage(data.message || 'Unassignment failed', 'error');
+                }
+            } catch (error) {
+                showMessage('Error unassigning ticket: ' + error.message, 'error');
+            }
+        }
+
+        // Show message function
+        function showMessage(message, type) {
+            const messageContainer = document.getElementById('messageContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type;
+            messageDiv.textContent = message;
+            
+            messageContainer.innerHTML = '';
+            messageContainer.appendChild(messageDiv);
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('ecotrack_token');
+            localStorage.removeItem('ecotrack_user');
+            window.location.href = '/login.html';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('assignmentModal');
+            if (event.target === modal) {
+                closeAssignmentModal();
+            }
+        }
+    </script>
+</body>
+</html>

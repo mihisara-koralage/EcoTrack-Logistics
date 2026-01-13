@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EcoTrack Logistics System - Supervisor Parcels</title>
+    <link rel="stylesheet" href="/css/general.css" />
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #27ae60 0%, #16a085 100%);
+            color: white;
+            padding: 2rem 3rem;
+            text-align: center;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            font-size: 2.5rem;
+        }
+
+        .mobile-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: white;
+        }
+
+        nav {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 1rem;
+            margin: 0;
+            padding: 0;
+        }
+
+        nav li {
+            margin: 0;
+        }
+
+        nav li a {
+            color: black;
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        nav li a:hover {
+            background: rgb(255, 255, 255);
+            transform: translateY(-2px);
+        }
+
+        nav li a.active {
+            background: rgba(255,255,255,0.3);
+            color: green;
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .user-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 25px;
+            color: white;
+            font-weight: 500;
+        }
+
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .logout-btn {
+            padding: 0.6rem 1.2rem;
+            background: rgba(231, 76, 60, 0.9);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .logout-btn:hover {
+            background: rgba(192, 57, 43, 0.9);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+        }
+
+        
+        main {
+            padding: 2rem 3rem;
+        }
+
+        .status {
+            padding: 1rem;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .parcels-section {
+            margin-bottom: 3rem;
+        }
+
+        .parcels-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .parcel-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .parcel-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0;
+            transition: width 0.6s ease;
+        }
+
+        .parcel-card:hover::before {
+            width: 100%;
+        }
+
+        .parcel-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(39, 174, 96, 0.15);
+            border-color: #27ae60;
+        }
+
+        .parcel-id {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .parcel-icon {
+            font-size: 1.5rem;
+            margin-right: 0.5rem;
+        }
+
+        .parcel-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-Pending {
+            background: #ffc107;
+            color: #856404;
+        }
+
+        .status-InTransit {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .status-Delivered {
+            background: #28a745;
+            color: white;
+        }
+
+        .parcel-route {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            color: #666;
+        }
+
+        .route-icon {
+            font-size: 1.2rem;
+            margin-right: 0.5rem;
+        }
+
+        .route-text {
+            font-size: 0.9rem;
+        }
+
+        .parcel-driver {
+            display: flex;
+            align-items: center;
+            color: #666;
+        }
+
+        .driver-icon {
+            font-size: 1.2rem;
+            margin-right: 0.5rem;
+        }
+
+        .driver-text {
+            font-size: 0.9rem;
+        }
+
+        .driver-name {
+            color: #28a745;
+            font-weight: 600;
+        }
+
+        .no-driver {
+            color: #dc3545;
+            font-style: italic;
+        }
+
+        .create-parcel-section {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 3rem;
+        }
+
+        .create-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input {
+            padding: 0.75rem;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .submit-btn {
+            grid-column: 1 / -1;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #27ae60 0%, #16a085 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2));
+            transition: left 0.6s ease;
+        }
+
+        .submit-btn:hover::before {
+            left: 100%;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(39, 174, 96, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+
+            nav {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            nav ul {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .parcels-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .create-form {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo-icon">📦</div>
+                    <h1>EcoTrack Supervisor</h1>
+                </div>
+                
+                <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+                <nav>
+                    <ul>
+                        <li><a href="/supervisor-dashboard.html">Dashboard</a></li>
+                        <li><a href="/supervisor-parcels.html" class="active">Parcels</a></li>
+                        <li><a href="/supervisor-routes.html">Routes</a></li>
+                        <li><a href="/supervisor-tickets.html">Tickets</a></li>
+                    </ul>
+                </nav>
+            
+            <div class="user-section">
+                <div class="user-info">
+                    <div class="user-avatar">S</div>
+                    <span id="userName">Loading...</span>
+                </div>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </header>
+        
+        <main>
+            <div id="status"></div>
+            
+            <section class="create-parcel-section">
+                <h2>Create New Parcel</h2>
+                <form id="create-form" class="create-form">
+                    <div class="form-group">
+                        <label for="parcelId">Parcel ID</label>
+                        <input type="text" id="parcelId" name="parcelId" placeholder="e.g., PKG-2024-001" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="senderName">Sender Name</label>
+                        <input type="text" id="senderName" name="senderName" placeholder="Enter sender's full name" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="senderPhone">Sender Phone</label>
+                        <input type="tel" id="senderPhone" name="senderPhone" placeholder="+94 XX XXX XXXX" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="senderAddress">Sender Address</label>
+                        <input type="text" id="senderAddress" name="senderAddress" placeholder="Enter sender's address" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="receiverName">Receiver Name</label>
+                        <input type="text" id="receiverName" name="receiverName" placeholder="Enter receiver's full name" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="receiverPhone">Receiver Phone</label>
+                        <input type="tel" id="receiverPhone" name="receiverPhone" placeholder="+94 XX XXX XXXX" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="receiverAddress">Receiver Address</label>
+                        <input type="text" id="receiverAddress" name="receiverAddress" placeholder="Enter receiver's address" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="pickupLocation">Pickup Location</label>
+                        <input type="text" id="pickupLocation" name="pickupLocation" placeholder="e.g., Colombo, Kandy" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="deliveryLocation">Delivery Location</label>
+                        <input type="text" id="deliveryLocation" name="deliveryLocation" placeholder="e.g., Galle, Jaffna" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="packageWeight">Package Weight</label>
+                        <input type="text" id="packageWeight" name="packageWeight" placeholder="e.g., 2.5 kg" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="packageType">Package Type</label>
+                        <select id="packageType" name="packageType" required>
+                            <option value="">Select package type...</option>
+                            <option value="Standard">Standard</option>
+                            <option value="Express">Express</option>
+                            <option value="Fragile">Fragile</option>
+                            <option value="Bulk">Bulk</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="priority">Priority</label>
+                        <select id="priority" name="priority" required>
+                            <option value="">Select priority...</option>
+                            <option value="Low">Low</option>
+                            <option value="Normal">Normal</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="estimatedDelivery">Estimated Delivery</label>
+                        <input type="text" id="estimatedDelivery" name="estimatedDelivery" placeholder="e.g., 2:30 PM" required />
+                    </div>
+                    <button type="submit" class="submit-btn">Create Parcel</button>
+                </form>
+            </section>
+            
+            <section class="parcels-section">
+                <h2>Existing Parcels</h2>
+                <div id="parcelList" class="parcels-grid">
+                    <div class="loading">Loading parcels...</div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Get authentication token
+        const token = localStorage.getItem('ecotrack_token');
+        
+        // Check authentication
+        if (!token) {
+            alert('You must be logged in to access this page. Redirecting to login...');
+            window.location.href = '/login.html';
+        }
+        
+        // Mock supervisor parcels data
+        let mockParcels = [
+            {
+                parcelId: 'PKG-2024-001',
+                status: 'InTransit',
+                pickupLocation: 'Colombo',
+                deliveryLocation: 'Kandy',
+                assignedDriver: {
+                    name: 'Raj Perera'
+                }
+            },
+            {
+                parcelId: 'PKG-2024-002',
+                status: 'Delivered',
+                pickupLocation: 'Galle',
+                deliveryLocation: 'Matara',
+                assignedDriver: {
+                    name: 'Nimal Fernando'
+                }
+            },
+            {
+                parcelId: 'PKG-2024-003',
+                status: 'Pending',
+                pickupLocation: 'Jaffna',
+                deliveryLocation: 'Trincomalee',
+                assignedDriver: null
+            },
+            {
+                parcelId: 'PKG-2024-004',
+                status: 'InTransit',
+                pickupLocation: 'Anuradhapura',
+                deliveryLocation: 'Polonnaruwa',
+                assignedDriver: {
+                    name: 'Kamal Silva'
+                }
+            }
+        ];
+
+        // DOM elements
+        const statusEl = document.getElementById('status');
+        const parcelListEl = document.getElementById('parcelList');
+        const createForm = document.getElementById('create-form');
+        const userNameEl = document.getElementById('userName');
+
+        // Status rendering
+        const renderStatus = (message, isError = false) => {
+            statusEl.textContent = message;
+            statusEl.className = isError ? 'error' : 'success';
+        };
+
+        // User info rendering
+        const renderUserInfo = () => {
+            const storedUserRaw = localStorage.getItem('ecotrack_user');
+            const storedUser = storedUserRaw ? JSON.parse(storedUserRaw) : null;
+            
+            if (storedUser) {
+                userNameEl.textContent = storedUser.name || 'Supervisor';
+            } else {
+                userNameEl.textContent = 'Loading...';
+            }
+        };
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem('ecotrack_token');
+            localStorage.removeItem('ecotrack_user');
+            renderStatus('Logged out. Redirecting to login...');
+            setTimeout(() => {
+                window.location.href = '/login.html';
+            }, 1000);
+        }
+
+        // Load initial parcels and user info
+        // Load parcels from backend
+        async function loadParcels() {
+            try {
+                const response = await fetch('http://localhost:3000/api/parcels', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const parcels = await response.json();
+                    renderParcels(parcels);
+                } else {
+                    // Fallback to mock data if backend fails
+                    renderParcels(mockParcels);
+                }
+            } catch (error) {
+                console.error('Error loading parcels:', error);
+                // Fallback to mock data
+                renderParcels(mockParcels);
+            }
+        }
+
+        // Render parcels function
+        function renderParcels(parcels) {
+            parcelListEl.innerHTML = parcels.map(p => `
+                <div class="parcel-card">
+                    <div class="parcel-id">
+                        <span class="parcel-icon">📦</span>
+                        <strong>${p.parcelId}</strong>
+                        <span class="parcel-status status-${p.status}">${p.status}</span>
+                    </div>
+                    
+                    <div class="parcel-route">
+                        <span class="route-icon">🛣️</span>
+                        <div class="route-text">
+                            <strong>Route:</strong> ${p.pickupLocation} → ${p.deliveryLocation}
+                        </div>
+                    </div>
+                    
+                    <div class="parcel-driver">
+                        <span class="driver-icon">👤</span>
+                        <div class="driver-text">
+                            <strong>Driver:</strong> 
+                            <span class="${p.assignedDriver ? 'driver-name' : 'no-driver'}">
+                                ${p.assignedDriver ? p.assignedDriver.name : 'No driver assigned'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Initialize the page
+        setTimeout(() => {
+            renderUserInfo();
+            renderStatus('Parcels loaded.');
+            loadParcels();
+        }, 1000);
+
+        // Form submission
+        createForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            renderStatus('Creating parcel...');
+            
+            const payload = {
+                parcelId: createForm.parcelId.value,
+                senderName: createForm.senderName.value,
+                receiverName: createForm.receiverName.value,
+                pickupLocation: createForm.pickupLocation.value,
+                deliveryLocation: createForm.deliveryLocation.value,
+                senderPhone: createForm.senderPhone.value,
+                receiverPhone: createForm.receiverPhone.value,
+                senderAddress: createForm.senderAddress.value,
+                receiverAddress: createForm.receiverAddress.value,
+                packageWeight: createForm.packageWeight.value,
+                packageType: createForm.packageType.value,
+                priority: createForm.priority.value,
+                estimatedDelivery: createForm.estimatedDelivery.value
+            };
+
+            try {
+                const response = await fetch('http://localhost:3000/api/parcels', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    renderStatus('Parcel created successfully!');
+                    createForm.reset();
+                    
+                    // Refresh the parcel list
+                    loadParcels();
+                } else {
+                    const error = await response.json();
+                    renderStatus(`Error: ${error.message || 'Failed to create parcel'}`, true);
+                }
+            } catch (error) {
+                console.error('Error creating parcel:', error);
+                renderStatus('Network error. Please try again.', true);
+            }
+        });
+    </script>
+</body>
+</html>

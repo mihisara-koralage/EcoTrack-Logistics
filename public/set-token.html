@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Set Test Token</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .token-display {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+            word-break: break-all;
+            margin: 15px 0;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔑 EcoTrack Test Token Setup</h1>
+        
+        <h2>Test Supervisor Account</h2>
+        <p><strong>Email:</strong> supervisor@ecotrack.com</p>
+        <p><strong>Name:</strong> Test Supervisor</p>
+        <p><strong>Role:</strong> Supervisor</p>
+        
+        <h3>Authentication Token</h3>
+        <div class="token-display" id="tokenDisplay">
+            Loading token...
+        </div>
+        
+        <button class="btn" onclick="setToken()">Set Token in Browser</button>
+        <button class="btn" onclick="goToParcels()">Go to Supervisor Parcels</button>
+        
+        <div id="status"></div>
+        
+        <h3>Instructions</h3>
+        <ol>
+            <li>Click "Set Token in Browser" to authenticate</li>
+            <li>Click "Go to Supervisor Parcels" to test the system</li>
+            <li>Create a new parcel to test database insertion</li>
+        </ol>
+    </div>
+
+    <script>
+        // Generate the proper token with sub field for database user
+        const testToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OTY1MjRkMGQ2YTdkMDlhM2QwNmI1YmEiLCJlbWFpbCI6InN1cGVydmlzb3JAZWNvdHJhY2suY29tIiwicm9sZSI6IlN1cGVydmlzb3IiLCJpYXQiOjE3NjgyMzYyNzcsImV4cCI6MTc2ODg0MTA3N30._iXXljDH6xJD-1Ad7autE0v_G7XDAy6H6KsDop06Q-8';
+        
+        document.getElementById('tokenDisplay').textContent = testToken;
+        
+        function setToken() {
+            localStorage.setItem('ecotrack_token', testToken);
+            localStorage.setItem('ecotrack_user', JSON.stringify({
+                email: 'supervisor@ecotrack.com',
+                name: 'Test Supervisor',
+                role: 'Supervisor'
+            }));
+            
+            document.getElementById('status').innerHTML = '<div class="success">✅ Token set successfully! You are now authenticated as Supervisor.</div>';
+        }
+        
+        function goToParcels() {
+            // Set token first if not already set
+            if (!localStorage.getItem('ecotrack_token')) {
+                setToken();
+            }
+            
+            // Redirect to supervisor parcels page
+            window.location.href = '/supervisor-parcels.html';
+        }
+        
+        // Check if already authenticated
+        if (localStorage.getItem('ecotrack_token')) {
+            document.getElementById('status').innerHTML = '<div class="success">✅ Already authenticated!</div>';
+        }
+    </script>
+</body>
+</html>

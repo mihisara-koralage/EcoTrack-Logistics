@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EcoTrack Logistics System - Login</title>
+    <link rel="stylesheet" href="/css/general.css" />
+    <style>
+        #role {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            background-color: white;
+            transition: border-color 0.3s ease;
+        }
+        
+        #role:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+        }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>EcoTrack Logistics System</h1>
+        <p>Login to your account</p>
+      </header>
+      
+      <main>
+        <h2>Login</h2>
+        <form id="login-form">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" placeholder="Enter your email" required />
+        
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" placeholder="Enter your password" required />
+        
+        <label for="role">Role</label>
+        <select id="role" name="role" required>
+          <option value="">Select your role...</option>
+          <option value="SupportAgent">Support Agent</option>
+          <option value="Supervisor">Supervisor</option>
+          <option value="Driver">Driver</option>
+        </select>
+        
+        <button type="submit">Sign In</button>
+      </form>
+      <p>
+        Need an account?
+        <a href="/register.html">Register here</a>
+      </p>
+      <section id="status" role="status" aria-live="polite"></section>
+      <section id="user-info" hidden>
+        <h3>Authenticated User</h3>
+        <pre id="user-data"></pre>
+      </section>
+    </main>
+    <script>
+      const loginForm = document.getElementById('login-form');
+      const statusEl = document.getElementById('status');
+      const userInfoSection = document.getElementById('user-info');
+      const userDataEl = document.getElementById('user-data');
+
+      const renderStatus = (message, isError = false) => {
+        statusEl.textContent = message;
+        statusEl.className = isError ? 'error' : 'success';
+        
+        // Remove animation classes after animation completes
+        setTimeout(() => {
+          statusEl.className = '';
+        }, 3000);
+      };
+
+      const populateUserInfo = (user) => {
+        if (!user) {
+          userInfoSection.hidden = true;
+          userDataEl.textContent = '';
+          return;
+        }
+        userInfoSection.hidden = false;
+        userDataEl.textContent = JSON.stringify(user, null, 2);
+      };
+
+      const dashboards = {
+        Supervisor: '/supervisor-dashboard.html',
+        Driver: '/driver-dashboard.html',
+        SupportAgent: '/support-dashboard.html',
+      };
+
+      const redirectToDashboard = (user) => {
+        if (!user) return;
+        const target = dashboards[user.role];
+        if (target) {
+          window.location.href = target;
+        }
+      };
+
+      const existingToken = localStorage.getItem('ecotrack_token');
+      if (existingToken) {
+        const storedUserRaw = localStorage.getItem('ecotrack_user');
+        const storedUser = storedUserRaw ? JSON.parse(storedUserRaw) : null;
+        populateUserInfo(storedUser);
+        renderStatus('Existing session detected. Redirecting...');
+        redirectToDashboard(storedUser);
+      }
+
+      // Mock login function for frontend-only setup
+      async function mockLogin(payload) {
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Get selected role from the form
+        const selectedRole = document.getElementById('role').value;
+        
+        // Mock user data
+        const mockUser = {
+          id: Math.floor(Math.random() * 1000) + 1,
+          name: payload.email.split('@')[0].charAt(0).toUpperCase() + payload.email.split('@')[0].slice(1),
+          email: payload.email,
+          role: selectedRole,
+          createdAt: new Date().toISOString()
+        };
+        
+        // Mock token
+        const mockToken = btoa(JSON.stringify({
+          user: mockUser,
+          exp: Date.now() + 24 * 60 * 60 * 1000 // 24 hours
+        }));
+        
+        return {
+          success: true,
+          token: mockToken,
+          user: mockUser
+        };
+      }
+
+      loginForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        
+        // Disable form and show loading state
+        const submitButton = loginForm.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton.textContent;
+        submitButton.textContent = 'Signing in...';
+        submitButton.disabled = true;
+        loginForm.classList.add('loading');
+        
+        renderStatus('Signing in...');
+
+        const payload = {
+          email: loginForm.email.value,
+          password: loginForm.password.value,
+        };
+
+        try {
+          // Mock authentication for frontend-only setup
+          // In production, this would be an actual API call
+          const mockResponse = await mockLogin(payload);
+          
+          if (!mockResponse.success) {
+            throw new Error(mockResponse.message || 'Login failed.');
+          }
+
+          localStorage.setItem('ecotrack_token', mockResponse.token);
+          localStorage.setItem('ecotrack_user', JSON.stringify(mockResponse.user));
+
+          renderStatus('Login successful. Redirecting...');
+          populateUserInfo(mockResponse.user);
+          
+          // Redirect after a short delay to show success message
+          setTimeout(() => {
+            redirectToDashboard(mockResponse.user);
+          }, 1000);
+          
+        } catch (error) {
+          renderStatus(error.message, true);
+          localStorage.removeItem('ecotrack_token');
+          localStorage.removeItem('ecotrack_user');
+          populateUserInfo(null);
+        } finally {
+          // Re-enable form
+          submitButton.textContent = originalButtonText;
+          submitButton.disabled = false;
+          loginForm.classList.remove('loading');
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supervisor - Enhanced Ticket Management</title>
+    <link rel="stylesheet" href="/css/supervisor.css">
+    <link rel="stylesheet" href="/css/ticket-styles.css">
+    <link rel="stylesheet" href="/css/parcel-integration.css">
+    <style>
+        /* Supervisor-specific overrides */
+        .header { background: linear-gradient(135deg, #27ae60 0%, #16a085 100%); }
+        .btn-primary { background: #27ae60; }
+        .btn-primary:hover { background: #16a085; }
+        .filters button { background: #27ae60; }
+        .filters button:hover { background: #16a085; }
+        .pagination button.active { background: #27ae60; }
+        .stat-number { color: #27ae60; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Enhanced Ticket Management - Supervisor</h1>
+        <div class="user-info">
+            <span id="userName">Loading...</span>
+            <button onclick="logout()" class="btn btn-warning" style="margin-left: 1rem;">Logout</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="messageContainer"></div>
+
+        <div class="filters">
+            <form id="filterForm">
+                <select id="statusFilter">
+                    <option value="">All Status</option>
+                    <option value="Open">Open</option>
+                    <option value="InProgress">In Progress</option>
+                    <option value="Resolved">Resolved</option>
+                </select>
+                <select id="priorityFilter">
+                    <option value="">All Priority</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                </select>
+                <select id="issueTypeFilter">
+                    <option value="">All Issue Types</option>
+                    <option value="Lost">Lost</option>
+                    <option value="Delayed">Delayed</option>
+                    <option value="Damaged">Damaged</option>
+                    <option value="General">General</option>
+                </select>
+                <select id="parcelStatusFilter">
+                    <option value="">All Parcel Status</option>
+                    <option value="Created">Created</option>
+                    <option value="PickedUp">Picked Up</option>
+                    <option value="InTransit">In Transit</option>
+                    <option value="OutForDelivery">Out for Delivery</option>
+                    <option value="Delivered">Delivered</option>
+                    <option value="Returned">Returned</option>
+                    <option value="Lost">Lost</option>
+                </select>
+                <input type="text" id="searchFilter" placeholder="Search tickets...">
+                <button type="submit">Apply Filters</button>
+                <button type="button" onclick="clearFilters()">Clear</button>
+            </form>
+        </div>
+
+        <!-- Statistics Summary -->
+        <div id="statsContainer" class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalTickets">0</div>
+                <div class="stat-label">Total Tickets</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="ticketsWithParcels">0</div>
+                <div class="stat-label">With Parcels</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="deliveredParcels">0</div>
+                <div class="stat-label">Delivered</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="inTransitParcels">0</div>
+                <div class="stat-label">In Transit</div>
+            </div>
+        </div>
+
+        <div id="ticketsContainer" class="tickets-grid">
+            <div class="loading">Loading tickets...</div>
+        </div>
+
+        <div id="paginationContainer" class="pagination"></div>
+    </div>
+
+    <!-- Enhanced Ticket Details Modal -->
+    <div id="enhancedDetailsModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2>Ticket & Parcel Details</h2>
+                <span class="close" onclick="closeEnhancedDetailsModal()">&times;</span>
+            </div>
+            <div id="enhancedTicketDetails">
+                <!-- Enhanced details will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Parcel Tracking Modal -->
+    <div id="parcelTrackingModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2>Parcel Tracking</h2>
+                <span class="close" onclick="closeParcelTrackingModal()">&times;</span>
+            </div>
+            <div id="parcelTrackingContent">
+                <!-- Parcel tracking will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Assignment Modal -->
+    <div id="assignmentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Assign Ticket</h2>
+                <span class="close" onclick="closeAssignmentModal()">&times;</span>
+            </div>
+            <form id="assignmentForm">
+                <div class="form-group">
+                    <label for="assignedTo">Support Agent:</label>
+                    <select id="assignedTo" required>
+                        <option value="">Select Support Agent...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="assignmentNotes">Assignment Notes:</label>
+                    <textarea id="assignmentNotes" placeholder="Optional notes for assignment..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="estimatedResolutionTime">Estimated Resolution Time:</label>
+                    <input type="datetime-local" id="estimatedResolutionTime">
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Assign Ticket</button>
+                    <button type="button" class="btn" onclick="closeAssignmentModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/ticket-api.js"></script>
+    <script src="/js/ticket-parcel-integration.js"></script>
+    <script>
+        let currentPage = 1;
+        let currentFilters = {};
+        let supportAgents = [];
+        let currentTicketId = null;
+        let ticketParcelAPI = new TicketParcelIntegration();
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            loadSupportAgents();
+            loadTicketsWithParcelSummary();
+        });
+
+        // Check authentication
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            if (user.role !== 'Supervisor') {
+                alert('Access denied. Supervisors only.');
+                window.location.href = '/login.html';
+                return;
+            }
+
+            document.getElementById('userName').textContent = user.name;
+        }
+
+        // Load support agents for assignment
+        async function loadSupportAgents() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/users?role=SupportAgent', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    supportAgents = data.data || data;
+                    populateSupportAgents();
+                }
+            } catch (error) {
+                console.error('Error loading support agents:', error);
+            }
+        }
+
+        // Populate support agents dropdown
+        function populateSupportAgents() {
+            const select = document.getElementById('assignedTo');
+            select.innerHTML = '<option value="">Select Support Agent...</option>';
+            
+            supportAgents.forEach(agent => {
+                const option = document.createElement('option');
+                option.value = agent._id;
+                option.textContent = `${agent.name} (${agent.email})`;
+                select.appendChild(option);
+            });
+        }
+
+        // Load tickets with parcel summary
+        async function loadTicketsWithParcelSummary(page = 1) {
+            try {
+                const params = {
+                    page: page,
+                    limit: 20,
+                    ...currentFilters
+                };
+
+                const data = await ticketParcelAPI.getTicketsWithParcelSummary(params);
+                displayTicketsWithParcels(data.data.tickets);
+                displayPagination(data.data.pagination);
+                displayStatistics(data.data.summary);
+                currentPage = page;
+            } catch (error) {
+                showMessage('Error loading tickets: ' + error.message, 'error');
+            }
+        }
+
+        // Display tickets with parcel information
+        function displayTicketsWithParcels(tickets) {
+            const container = document.getElementById('ticketsContainer');
+            
+            if (tickets.length === 0) {
+                container.innerHTML = '<div class="loading">No tickets found.</div>';
+                return;
+            }
+
+            container.innerHTML = tickets.map(ticket => 
+                EnhancedTicketDisplay.displayTicketWithParcel(ticket)
+            ).join('');
+        }
+
+        // Display statistics
+        function displayStatistics(summary) {
+            document.getElementById('totalTickets').textContent = summary.totalTickets;
+            document.getElementById('ticketsWithParcels').textContent = summary.ticketsWithParcels;
+            document.getElementById('deliveredParcels').textContent = summary.deliveredParcels;
+            document.getElementById('inTransitParcels').textContent = summary.inTransitParcels;
+        }
+
+        // View enhanced ticket details
+        async function viewTicketWithParcel(ticketId) {
+            try {
+                const data = await ticketParcelAPI.getTicketWithParcel(ticketId);
+                document.getElementById('enhancedTicketDetails').innerHTML = 
+                    EnhancedTicketDisplay.displayTicketDetailsWithParcel(data.data);
+                document.getElementById('enhancedDetailsModal').style.display = 'block';
+            } catch (error) {
+                showMessage('Error loading ticket details: ' + error.message, 'error');
+            }
+        }
+
+        // View parcel tracking
+        async function viewParcelTracking(ticketId) {
+            try {
+                const data = await ticketParcelAPI.getTicketParcelTracking(ticketId);
+                document.getElementById('parcelTrackingContent').innerHTML = 
+                    ParcelUI.displayParcelTracking(data.data.trackingInfo);
+                document.getElementById('parcelTrackingModal').style.display = 'block';
+            } catch (error) {
+                showMessage('Error loading parcel tracking: ' + error.message, 'error');
+            }
+        }
+
+        // Close enhanced details modal
+        function closeEnhancedDetailsModal() {
+            document.getElementById('enhancedDetailsModal').style.display = 'none';
+        }
+
+        // Close parcel tracking modal
+        function closeParcelTrackingModal() {
+            document.getElementById('parcelTrackingModal').style.display = 'none';
+        }
+
+        // Open assignment modal
+        function openAssignmentModal(ticketId) {
+            currentTicketId = ticketId;
+            document.getElementById('assignmentModal').style.display = 'block';
+        }
+
+        // Close assignment modal
+        function closeAssignmentModal() {
+            document.getElementById('assignmentModal').style.display = 'none';
+            document.getElementById('assignmentForm').reset();
+            currentTicketId = null;
+        }
+
+        // Handle assignment form submission
+        document.getElementById('assignmentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const assignedTo = document.getElementById('assignedTo').value;
+            const notes = document.getElementById('assignmentNotes').value;
+            const estimatedResolutionTime = document.getElementById('estimatedResolutionTime').value;
+
+            if (!assignedTo) {
+                showMessage('Please select a support agent', 'error');
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/tickets/${currentTicketId}/assign`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        assignedTo,
+                        notes,
+                        estimatedResolutionTime: estimatedResolutionTime ? new Date(estimatedResolutionTime).toISOString() : undefined
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('Ticket assigned successfully', 'success');
+                    closeAssignmentModal();
+                    loadTicketsWithParcelSummary(currentPage);
+                } else {
+                    showMessage(data.message || 'Assignment failed', 'error');
+                }
+            } catch (error) {
+                showMessage('Error assigning ticket: ' + error.message, 'error');
+            }
+        });
+
+        // Handle filter form submission
+        document.getElementById('filterForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            currentFilters = {
+                status: document.getElementById('statusFilter').value,
+                priority: document.getElementById('priorityFilter').value,
+                issueType: document.getElementById('issueTypeFilter').value,
+                parcelStatus: document.getElementById('parcelStatusFilter').value,
+                search: document.getElementById('searchFilter').value
+            };
+
+            // Remove empty filters
+            Object.keys(currentFilters).forEach(key => {
+                if (!currentFilters[key]) {
+                    delete currentFilters[key];
+                }
+            });
+
+            loadTicketsWithParcelSummary(1);
+        });
+
+        // Clear filters
+        function clearFilters() {
+            document.getElementById('filterForm').reset();
+            currentFilters = {};
+            loadTicketsWithParcelSummary(1);
+        }
+
+        // Show message
+        function showMessage(message, type) {
+            const container = document.getElementById('messageContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type;
+            messageDiv.textContent = message;
+            container.appendChild(messageDiv);
+
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login.html';
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const enhancedModal = document.getElementById('enhancedDetailsModal');
+            const trackingModal = document.getElementById('parcelTrackingModal');
+            const assignmentModal = document.getElementById('assignmentModal');
+            
+            if (event.target === enhancedModal) {
+                closeEnhancedDetailsModal();
+            }
+            if (event.target === trackingModal) {
+                closeParcelTrackingModal();
+            }
+            if (event.target === assignmentModal) {
+                closeAssignmentModal();
+            }
+        }
+    </script>
+</body>
+</html>

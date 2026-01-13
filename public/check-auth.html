@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication Check</title>
+    <link rel="stylesheet" href="/css/general.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Authentication Check</h1>
+            <p>Verify your current login status</p>
+        </header>
+        
+        <main>
+            <section class="card">
+                <h2>Current Login Status</h2>
+                <div id="auth-status">
+                    <div class="loading">Checking...</div>
+                </div>
+            </section>
+            
+            <section class="card">
+                <h2>Actions</h2>
+                <button onclick="clearAndRedirect()">Clear Data & Go to Login</button>
+                <button onclick="testSupportAccess()">Test Support Dashboard Access</button>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const authStatusEl = document.getElementById('auth-status');
+
+        function checkAuth() {
+            const token = localStorage.getItem('ecotrack_token');
+            const storedUserRaw = localStorage.getItem('ecotrack_user');
+            const storedUser = storedUserRaw ? JSON.parse(storedUserRaw) : null;
+
+            let html = '<div style="background: #f8f9fa; padding: 20px; border-radius: 8px; font-family: monospace;">';
+            
+            // Check token
+            if (token) {
+                html += `<p><strong>✓ Token Found:</strong> ${token.substring(0, 30)}...</p>`;
+            } else {
+                html += `<p><strong>✗ No Token Found</strong></p>`;
+            }
+
+            // Check user data
+            if (storedUser) {
+                html += `<p><strong>✓ User Data Found:</strong></p>`;
+                html += `<p>&nbsp;&nbsp;ID: ${storedUser.id || 'N/A'}</p>`;
+                html += `<p>&nbsp;&nbsp;Name: ${storedUser.name || 'N/A'}</p>`;
+                html += `<p>&nbsp;&nbsp;Email: ${storedUser.email || 'N/A'}</p>`;
+                html += `<p>&nbsp;&nbsp;Role: <span style="color: ${storedUser.role === 'SupportAgent' ? 'green' : 'orange'}">${storedUser.role || 'N/A'}</span></p>`;
+                
+                // Check role match
+                if (storedUser.role === 'SupportAgent') {
+                    html += `<p><strong>✓ Role Check: SupportAgent - ACCESS GRANTED</strong></p>`;
+                } else {
+                    html += `<p><strong>✗ Role Check: Expected 'SupportAgent', got '${storedUser.role}' - ACCESS DENIED</strong></p>`;
+                }
+            } else {
+                html += `<p><strong>✗ No User Data Found</strong></p>`;
+            }
+
+            html += '</div>';
+            authStatusEl.innerHTML = html;
+        }
+
+        function clearAndRedirect() {
+            localStorage.removeItem('ecotrack_token');
+            localStorage.removeItem('ecotrack_user');
+            window.location.href = '/login.html';
+        }
+
+        function testSupportAccess() {
+            const token = localStorage.getItem('ecotrack_token');
+            const storedUserRaw = localStorage.getItem('ecotrack_user');
+            const storedUser = storedUserRaw ? JSON.parse(storedUserRaw) : null;
+
+            if (!token || !storedUser) {
+                alert('Not authenticated');
+                return;
+            }
+
+            if (storedUser.role === 'SupportAgent') {
+                alert('✓ SupportAgent role confirmed. You should be able to access the dashboard.');
+                window.location.href = '/support-dashboard.html';
+            } else {
+                alert(`✗ Current role: ${storedUser.role}. Expected: SupportAgent`);
+            }
+        }
+
+        // Check on page load
+        checkAuth();
+
+        // Auto-refresh every 3 seconds
+        setInterval(checkAuth, 3000);
+    </script>
+</body>
+</html>

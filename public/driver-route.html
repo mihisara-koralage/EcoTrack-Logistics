@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EcoTrack - Driver Route</title>
+    <link rel="stylesheet" href="/css/driver.css" />
+    <style>
+        /* Professional Header Styles */
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            font-size: 2.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.5rem;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        .logo-text h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .logo-text p {
+            margin: 0;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
+        }
+
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .logout-button {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: rgba(231, 76, 60, 0.9);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logout-button:hover {
+            background: rgba(192, 57, 43, 0.9);
+            transform: translateY(-2px);
+        }
+
+        /* Professional Navigation */
+        .main-nav {
+            display: flex;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .main-nav a {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .main-nav a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .main-nav a.active {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .nav-icon {
+            font-size: 1.2rem;
+        }
+        .route-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .route-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .route-map {
+            background: #e9ecef;
+            padding: 20px;
+            border-radius: 8px;
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+        }
+        
+        .parcel-details {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+        }
+        
+        .parcel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .parcel-id {
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        .parcel-status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status-pending { background: #ffc107; color: #212529; }
+        .status-assigned { background: #28a745; color: white; }
+        .status-in-transit { background: #17a2b8; color: white; }
+        .status-delivered { background: #6c757d; color: white; }
+        
+        .route-step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            border-left: 3px solid #007bff;
+        }
+        
+        .step-number {
+            width: 30px;
+            height: 30px;
+            background: #007bff;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+        
+        .step-info {
+            flex: 1;
+        }
+        
+        .step-location {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .step-time {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .eta-section {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .eta-time {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .eta-details {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .action-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .no-route {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .status-message {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status-loading {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo-icon">ECO</div>
+                    <div class="logo-text">
+                        <h1 class="header-title">EcoTrack Driver</h1>
+                        <p class="header-subtitle">Professional Delivery Management</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <div class="user-info">
+                        <div class="user-avatar">D</div>
+                        <span id="userName">Driver</span>
+                    </div>
+                    <button id="logout" class="logout-button">
+                        Logout
+                    </button>
+                </div>
+            </div>
+            <nav class="main-nav">
+                <a href="/driver-dashboard.html">
+                    Dashboard
+                </a>
+                <a href="/driver-parcels.html">
+                    My Parcels
+                </a>
+                <a href="/driver-route.html" class="active">
+                    Current Route
+                </a>
+            </nav>
+        </header>
+        
+        <main>
+            <div id="status" class="hidden"></div>
+            
+            <div id="route-content">
+                <div class="loading">Loading route information...</div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const statusEl = document.getElementById('status');
+        const routeContent = document.getElementById('route-content');
+        let currentParcelId = null;
+
+        const token = localStorage.getItem('ecotrack_token');
+        if (!token) {
+            window.location.href = '/login.html';
+        }
+
+        // Initialize the page
+        function initializePage() {
+            // Get URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const parcelId = urlParams.get('parcelId');
+
+            if (!parcelId) {
+                showNoRoute();
+                return;
+            }
+
+            currentParcelId = parcelId;
+            // Load route information with mock data
+            loadRouteInformation(parcelId);
+        }
+
+        // Initialize the page when DOM is ready
+        initializePage();
+
+        function loadRouteInformation(parcelId) {
+            showStatus('Loading route information...', 'loading');
+            
+            // Mock route data for frontend-only setup
+            setTimeout(() => {
+                const mockRouteData = {
+                    parcelId: parcelId,
+                    status: 'InTransit',
+                    route: {
+                        id: 'ROUTE-001',
+                        pickupLocation: 'Colombo',
+                        deliveryLocation: 'Kandy',
+                        distance: '120.5 km',
+                        estimatedTime: '2h 30min',
+                        currentLocation: 'Kadugannawa',
+                        progress: 65,
+                        steps: [
+                            {
+                                step: 1,
+                                location: 'Colombo Distribution Center',
+                                address: '123 Main St, Colombo',
+                                time: '09:00 AM',
+                                status: 'completed',
+                                type: 'pickup'
+                            },
+                            {
+                                step: 2,
+                                location: 'Kadugannawa Checkpoint',
+                                address: 'A1 Highway, Kadugannawa',
+                                time: '10:30 AM',
+                                status: 'current',
+                                type: 'checkpoint'
+                            },
+                            {
+                                step: 3,
+                                location: 'Kandy Delivery Point',
+                                address: '45 Temple St, Kandy',
+                                time: '11:30 AM',
+                                status: 'pending',
+                                type: 'delivery'
+                            }
+                        ]
+                    },
+                    parcel: {
+                        parcelId: parcelId,
+                        customerName: 'John Smith',
+                        customerPhone: '+94 77 123 4567',
+                        customerAddress: '45 Temple St, Kandy',
+                        packageWeight: '2.5 kg',
+                        packageType: 'Standard',
+                        priority: 'Normal'
+                    },
+                    eta: {
+                        estimatedArrival: '11:30 AM',
+                        remainingTime: '45 minutes',
+                        trafficCondition: 'Moderate',
+                        weatherCondition: 'Sunny'
+                    }
+                };
+
+                renderRoute(mockRouteData);
+                showStatus('Route loaded successfully', 'success');
+            }, 1000);
+        }
+
+        function renderRoute(data) {
+            routeContent.innerHTML = `
+                <div class="route-container">
+                    <div class="route-info">
+                        <h2>Route Information</h2>
+                        
+                        <div class="parcel-details">
+                            <div class="parcel-header">
+                                <span class="parcel-id">${data.parcel.parcelId}</span>
+                                <span class="parcel-status status-${data.status.toLowerCase()}">${data.status}</span>
+                            </div>
+                            <p><strong>Customer:</strong> ${data.parcel.customerName}</p>
+                            <p><strong>Phone:</strong> ${data.parcel.customerPhone}</p>
+                            <p><strong>Address:</strong> ${data.parcel.customerAddress}</p>
+                            <p><strong>Package:</strong> ${data.parcel.packageWeight} - ${data.parcel.packageType}</p>
+                        </div>
+                        
+                        <div class="eta-section">
+                            <div class="eta-time">${data.eta.estimatedArrival}</div>
+                            <div class="eta-details">
+                                <div>Current: ${data.route.currentLocation}</div>
+                                <div>Remaining: ${data.eta.remainingTime}</div>
+                                <div>Traffic: ${data.eta.trafficCondition}</div>
+                                <div>Weather: ${data.eta.weatherCondition}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <button class="action-btn btn-primary" onclick="startNavigation()">
+                                Start Navigation
+                            </button>
+                            <button class="action-btn btn-success" onclick="markCheckpoint()">
+                                Checkpoint Reached
+                            </button>
+                            <button class="action-btn btn-warning" onclick="reportIssue()">
+                                Report Issue
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="route-map">
+                        <div>
+                            <h3>Route Map</h3>
+                            <p>Interactive map would be displayed here</p>
+                            <p>Route: ${data.route.pickupLocation} → ${data.route.deliveryLocation}</p>
+                            <p>Distance: ${data.route.distance}</p>
+                            <p>Est. Time: ${data.route.estimatedTime}</p>
+                            <div style="margin-top: 20px; padding: 10px; background: #fff; border-radius: 4px;">
+                                <div style="font-weight: bold; margin-bottom: 10px;">Route Progress: ${data.route.progress}%</div>
+                                <div style="width: 100%; height: 20px; background: #e9ecef; border-radius: 10px; overflow: hidden;">
+                                    <div style="width: ${data.route.progress}%; height: 100%; background: linear-gradient(90deg, #28a745, #20c997); transition: width 0.3s ease;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 30px;">
+                    <h2>Route Steps</h2>
+                    ${data.route.steps.map(step => `
+                        <div class="route-step">
+                            <div class="step-number">${step.step}</div>
+                            <div class="step-info">
+                                <div class="step-location">${step.location}</div>
+                                <div class="step-time">${step.time} - ${step.status}</div>
+                                <div style="color: #666; font-size: 14px;">${step.address}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            hideStatus();
+        }
+
+        function showNoRoute() {
+            routeContent.innerHTML = `
+                <div class="no-route">
+                    <h3>No Route Assigned</h3>
+                    <p>This parcel does not have an assigned route yet.</p>
+                    <p>Please contact your supervisor to have a route optimized and assigned.</p>
+                    <button class="refresh-btn" onclick="window.location.reload()">Check Again</button>
+                </div>
+            `;
+            hideStatus();
+        }
+
+        function calculateETA(minutes) {
+            const now = new Date();
+            const eta = new Date(now.getTime() + (minutes * 60 * 1000));
+            
+            return eta.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function getRelativeTime(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMins / 60);
+            const diffDays = Math.floor(diffHours / 24);
+
+            if (diffDays > 0) {
+                return `${diffDays} days ago`;
+            } else if (diffHours > 0) {
+                return `${diffHours} hours ago`;
+            } else if (diffMins > 0) {
+                return `${diffMins} minutes ago`;
+            } else {
+                return 'Just now';
+            }
+        }
+
+        function showStatus(message, type) {
+            statusEl.textContent = message;
+            statusEl.className = type;
+            statusEl.classList.remove('hidden');
+        }
+
+        function hideStatus() {
+            statusEl.classList.add('hidden');
+        }
+
+        // Action functions
+        function startNavigation() {
+            showStatus('Starting navigation...', 'loading');
+            setTimeout(() => {
+                showStatus('Navigation started! Follow the route on your GPS device.', 'success');
+            }, 1000);
+        }
+
+        function markCheckpoint() {
+            showStatus('Marking checkpoint...', 'loading');
+            setTimeout(() => {
+                showStatus('Checkpoint marked successfully!', 'success');
+                // Reload route to show updated progress
+                if (currentParcelId) {
+                    loadRouteInformation(currentParcelId);
+                }
+            }, 1000);
+        }
+
+        function reportIssue() {
+            showStatus('Opening issue report form...', 'loading');
+            setTimeout(() => {
+                showStatus('Issue report form opened. Please describe the problem.', 'success');
+            }, 1000);
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            if (parcelId) {
+                loadRouteInformation(parcelId);
+            }
+        }, 30000);
+    </script>
+</body>
+</html>

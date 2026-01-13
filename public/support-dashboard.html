@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EcoTrack Support Dashboard</title>
+    <link rel="stylesheet" href="/css/support.css" />
+    <style>
+        /* Support-specific overrides */
+        .header { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); }
+        .btn-primary { background: #e74c3c; }
+        .btn-primary:hover { background: #c0392b; }
+        .filters button { background: #e74c3c; }
+        .filters button:hover { background: #c0392b; }
+        .pagination button.active { background: #e74c3c; }
+        .stat-number { color: #e74c3c; }
+
+        /* Enhanced Support Dashboard Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        header {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            padding: 2rem 3rem;
+            border-radius: 20px 20px 0 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(231, 76, 60, 0.3);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            color: white;
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h1::before {
+            content: '🎧';
+            font-size: 2.5rem;
+        }
+
+        #logout {
+            padding: 0.75rem 1.5rem;
+            background: rgba(231, 76, 60, 0.9);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        #logout:hover {
+            background: rgba(192, 57, 43, 0.9);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+        }
+
+        .header-nav a {
+            color: black;
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+        }
+
+        .header-nav a:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .header-nav a.active {
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            color: #e74c3c;
+        }
+
+        main {
+            padding: 2rem;
+        }
+
+        #status {
+            margin-bottom: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        #status.success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border-left: 4px solid #28a745;
+            color: #155724;
+        }
+
+        #status.error {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(231, 76, 60, 0.1);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #e74c3c, #c0392b, #e74c3c);
+            opacity: 0.8;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(231, 76, 60, 0.15);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #e74c3c;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: #6c757d;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(231, 76, 60, 0.1);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 2rem;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #e74c3c, #c0392b, #e74c3c);
+            opacity: 0.8;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(231, 76, 60, 0.15);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-bottom: 1px solid rgba(231, 76, 60, 0.1);
+        }
+
+        .card-title {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            opacity: 0.8;
+        }
+
+        .ticket-item {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 1px solid rgba(231, 76, 60, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ticket-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            transition: width 0.3s ease;
+            width: 0;
+        }
+
+        .ticket-item:hover::before {
+            width: 8px;
+        }
+
+        .ticket-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.1);
+            border-color: #e74c3c;
+        }
+
+        .ticket-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .ticket-id {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #e74c3c;
+        }
+
+        .ticket-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-open {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+        }
+
+        .status-in-progress {
+            background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+            color: white;
+        }
+
+        .status-resolved {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+        }
+
+        .ticket-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .ticket-info-item {
+            padding: 0.75rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid rgba(231, 76, 60, 0.1);
+        }
+
+        .ticket-info-label {
+            font-size: 0.85rem;
+            color: #6c757d;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+
+        .ticket-info-value {
+            font-size: 0.95rem;
+            color: #495057;
+            font-weight: 500;
+        }
+
+        .ticket-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .ticket-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .ticket-btn-primary {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+
+        .ticket-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        .ticket-btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+            color: white;
+        }
+
+        .ticket-btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+        }
+
+        .quick-actions {
+            padding: 1.5rem;
+        }
+
+        .quick-action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+        }
+
+        .quick-action-btn {
+            padding: 1rem;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .quick-action-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .quick-action-btn:hover::before {
+            left: 100%;
+        }
+
+        .quick-action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.3);
+        }
+
+        .quick-action-icon {
+            display: block;
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .quick-action-text {
+            display: block;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .loading::before {
+            content: '⏳';
+            display: block;
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Performance Metrics Styles */
+        .performance-grid {
+            padding: 1.5rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .performance-item {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 1px solid rgba(231, 76, 60, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .performance-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.1);
+            border-color: #e74c3c;
+        }
+
+        .performance-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #e74c3c;
+            margin-bottom: 0.25rem;
+        }
+
+        .performance-label {
+            font-size: 0.85rem;
+            color: #6c757d;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Activity Log Styles */
+        .activity-log {
+            padding: 1.5rem;
+        }
+
+        .activity-item {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 1px solid rgba(231, 76, 60, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .activity-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 3px;
+            height: 100%;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            opacity: 0.8;
+        }
+
+        .activity-item:hover {
+            transform: translateX(2px);
+            box-shadow: 0 2px 10px rgba(231, 76, 60, 0.1);
+            border-color: #e74c3c;
+        }
+
+        .activity-time {
+            font-size: 0.8rem;
+            color: #6c757d;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .activity-text {
+            font-size: 0.9rem;
+            color: #495057;
+            font-weight: 500;
+        }
+
+        /* Priority Issues Styles */
+        .priority-issues {
+            padding: 1.5rem;
+        }
+
+        .priority-item {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            border: 1px solid rgba(220, 53, 69, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .priority-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(135deg, #dc3545, #c82333);
+        }
+
+        .priority-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.2);
+        }
+
+        .priority-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .priority-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #dc3545;
+        }
+
+        .priority-level {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+        }
+
+        .priority-description {
+            font-size: 0.9rem;
+            color: #495057;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+
+        .priority-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .priority-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .priority-btn-primary {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+        }
+
+        .priority-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+        }
+
+        /* Team Status Styles */
+        .team-status {
+            padding: 1.5rem;
+        }
+
+        .team-member {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 1px solid rgba(231, 76, 60, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .team-member:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.1);
+            border-color: #e74c3c;
+        }
+
+        .team-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .team-info {
+            flex: 1;
+        }
+
+        .team-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 0.25rem;
+        }
+
+        .team-role {
+            font-size: 0.85rem;
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .team-status-indicator {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-online {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+        }
+
+        .status-busy {
+            background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+            color: white;
+        }
+
+        .status-offline {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+            color: white;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+                margin: 0.5rem;
+            }
+
+            header {
+                padding: 1.5rem;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .ticket-info {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="header-content">
+          <h1>Support Dashboard</h1>
+          <nav class="header-nav">
+            <a href="/support-dashboard.html" class="active">Dashboard</a>
+            <a href="/support-tickets.html">Tickets</a>
+            <a href="/support-parcels.html">Parcels</a>
+          </nav>
+          <button id="logout">Log out</button>
+        </div>
+      </header>
+      
+      <main>
+        <section id="status" role="status" aria-live="polite"></section>
+        
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="open-tickets-count">0</div>
+            <div class="stat-label">Open Tickets</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="resolved-tickets-count">0</div>
+            <div class="stat-label">Resolved Today</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="pending-tickets-count">0</div>
+            <div class="stat-label">Pending Response</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="avg-response-time">0m</div>
+            <div class="stat-label">Avg Response Time</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="customer-satisfaction">0%</div>
+            <div class="stat-label">Customer Satisfaction</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="escalation-rate">0%</div>
+            <div class="stat-label">Escalation Rate</div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <section class="card">
+            <div class="card-header">
+              <h2 class="card-title">Recent Open Tickets</h2>
+              <div class="card-icon">📋</div>
+            </div>
+            <div id="open-tickets-list">
+              <div class="loading">Loading tickets...</div>
+            </div>
+          </section>
+          
+          <section class="card">
+            <div class="card-header">
+              <h2 class="card-title">Performance Metrics</h2>
+              <div class="card-icon">📊</div>
+            </div>
+            <div class="performance-grid" id="performance-metrics">
+              <!-- Performance metrics will be populated here -->
+            </div>
+          </section>
+        </div>
+
+        <div class="dashboard-grid">
+          <section class="card">
+            <div class="card-header">
+              <h2 class="card-title">Quick Actions</h2>
+              <div class="card-icon">⚡</div>
+            </div>
+            <div class="quick-actions">
+              <div class="quick-action-buttons">
+                <button class="quick-action-btn" onclick="createNewTicket()">
+                  <span class="quick-action-icon">🎫</span>
+                  <span class="quick-action-text">New Ticket</span>
+                </button>
+                <button class="quick-action-btn" onclick="viewAllTickets()">
+                  <span class="quick-action-icon">📋</span>
+                  <span class="quick-action-text">All Tickets</span>
+                </button>
+                <button class="quick-action-btn" onclick="trackParcels()">
+                  <span class="quick-action-icon">📦</span>
+                  <span class="quick-action-text">Track Parcels</span>
+                </button>
+                <button class="quick-action-btn" onclick="escalateTicket()">
+                  <span class="quick-action-icon">🚨</span>
+                  <span class="quick-action-text">Escalate</span>
+                </button>
+                <button class="quick-action-btn" onclick="generateReport()">
+                  <span class="quick-action-icon">📈</span>
+                  <span class="quick-action-text">Reports</span>
+                </button>
+                <button class="quick-action-btn" onclick="contactSupervisor()">
+                  <span class="quick-action-icon">📞</span>
+                  <span class="quick-action-text">Contact</span>
+                </button>
+              </div>
+            </div>
+          </section>
+          
+          <section class="card">
+            <div class="card-header">
+              <h2 class="card-title">Recent Activity</h2>
+              <div class="card-icon">📝</div>
+            </div>
+            <div class="activity-log" id="activity-log">
+              <!-- Activity log will be populated here -->
+            </div>
+          </section>
+        </div>
+
+        <div class="dashboard-grid">
+          <section class="card">
+            <div class="card-header">
+              <h2 class="card-title">Priority Issues</h2>
+              <div class="card-icon">🔥</div>
+            </div>
+            <div class="priority-issues" id="priority-issues">
+              <!-- Priority issues will be populated here -->
+            </div>
+          </section>
+          
+          <section class="card">
+            <div class="card-header">
+              <h2 class="card-title">Team Status</h2>
+              <div class="card-icon">👥</div>
+            </div>
+            <div class="team-status" id="team-status">
+              <!-- Team status will be populated here -->
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      const statusEl = document.getElementById('status');
+      const openTicketsCountEl = document.getElementById('open-tickets-count');
+      const resolvedTicketsCountEl = document.getElementById('resolved-tickets-count');
+      const pendingTicketsCountEl = document.getElementById('pending-tickets-count');
+      const avgResponseTimeEl = document.getElementById('avg-response-time');
+      const customerSatisfactionEl = document.getElementById('customer-satisfaction');
+      const escalationRateEl = document.getElementById('escalation-rate');
+      const openTicketsListEl = document.getElementById('open-tickets-list');
+      const performanceMetricsEl = document.getElementById('performance-metrics');
+      const activityLogEl = document.getElementById('activity-log');
+      const priorityIssuesEl = document.getElementById('priority-issues');
+      const teamStatusEl = document.getElementById('team-status');
+      const logoutButton = document.getElementById('logout');
+
+      const renderStatus = (message, isError = false) => {
+        statusEl.innerHTML = `
+          <div style="padding: 15px; border-radius: 8px; margin: 20px 0; ${
+            isError ? 'background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;' 
+            : 'background: #d4edda; color: #155724; border: 1px solid #c3e6cb;'
+          }">
+            ${message}
+          </div>
+        `;
+        setTimeout(() => {
+          statusEl.innerHTML = '';
+        }, 5000);
+      };
+
+      const renderPerformanceMetrics = (metrics) => {
+        performanceMetricsEl.innerHTML = `
+          <div class="performance-item">
+            <div class="performance-value">${metrics.firstResponseTime || '2.5'}min</div>
+            <div class="performance-label">First Response</div>
+          </div>
+          <div class="performance-item">
+            <div class="performance-value">${metrics.resolutionTime || '15'}min</div>
+            <div class="performance-label">Avg Resolution</div>
+          </div>
+          <div class="performance-item">
+            <div class="performance-value">${metrics.ticketsPerHour || '4.2'}</div>
+            <div class="performance-label">Tickets/Hour</div>
+          </div>
+          <div class="performance-item">
+            <div class="performance-value">${metrics.customerRating || '4.8'}/5</div>
+            <div class="performance-label">Customer Rating</div>
+          </div>
+        `;
+      };
+
+      const renderActivityLog = (activities) => {
+        activityLogEl.innerHTML = activities.map(activity => `
+          <div class="activity-item">
+            <div class="activity-time">${activity.time}</div>
+            <div class="activity-text">${activity.text}</div>
+          </div>
+        `).join('');
+      };
+
+      const renderPriorityIssues = (issues) => {
+        priorityIssuesEl.innerHTML = issues.map(issue => `
+          <div class="priority-item">
+            <div class="priority-header">
+              <div class="priority-title">${issue.title}</div>
+              <div class="priority-level">${issue.priority}</div>
+            </div>
+            <div class="priority-description">${issue.description}</div>
+            <div class="priority-actions">
+              <button class="priority-btn priority-btn-primary" onclick="handlePriorityIssue('${issue.id}')">
+                Handle Now
+              </button>
+            </div>
+          </div>
+        `).join('');
+      };
+
+      const renderTeamStatus = (team) => {
+        teamStatusEl.innerHTML = team.map(member => `
+          <div class="team-member">
+            <div class="team-avatar">${member.name.charAt(0)}</div>
+            <div class="team-info">
+              <div class="team-name">${member.name}</div>
+              <div class="team-role">${member.role}</div>
+            </div>
+            <div class="team-status-indicator status-${member.status}">
+              ${member.status}
+            </div>
+          </div>
+        `).join('');
+      };
+
+      // Quick action functions
+      const createNewTicket = () => {
+        renderStatus('Opening new ticket form...', false);
+        setTimeout(() => {
+          window.location.href = '/support-tickets.html?action=new';
+        }, 1000);
+      };
+
+      const viewAllTickets = () => {
+        renderStatus('Navigating to tickets...', false);
+        setTimeout(() => {
+          window.location.href = '/support-tickets.html';
+        }, 1000);
+      };
+
+      const trackParcels = () => {
+        renderStatus('Opening parcel tracking...', false);
+        setTimeout(() => {
+          window.location.href = '/support-parcels.html';
+        }, 1000);
+      };
+
+      const escalateTicket = () => {
+        renderStatus('Opening escalation form...', false);
+      };
+
+      const generateReport = () => {
+        renderStatus('Generating performance report...', false);
+      };
+
+      const contactSupervisor = () => {
+        renderStatus('Opening supervisor contact...', false);
+      };
+
+      const handlePriorityIssue = (issueId) => {
+        renderStatus(`Handling priority issue ${issueId}...`, false);
+      };
+
+      const renderTickets = (tickets) => {
+        if (!tickets || tickets.length === 0) {
+          return '<div class="loading">No tickets found</div>';
+        }
+
+        return tickets.map(ticket => {
+          const statusClass = ticket.status?.toLowerCase().replace(/\s+/g, '-') || 'open';
+          const priorityClass = ticket.priority?.toLowerCase() || 'medium';
+          
+          return `
+            <div class="ticket-item">
+              <div class="ticket-header">
+                <span class="ticket-id">#${ticket.id}</span>
+                <span class="ticket-status status-${statusClass}">${ticket.status}</span>
+              </div>
+              <div class="ticket-info">
+                <div class="ticket-info-item">
+                  <div class="ticket-info-label">Subject</div>
+                  <div class="ticket-info-value">${ticket.subject}</div>
+                </div>
+                <div class="ticket-info-item">
+                  <div class="ticket-info-label">Priority</div>
+                  <div class="ticket-info-value">${ticket.priority}</div>
+                </div>
+              </div>
+              <div class="ticket-actions">
+                <button class="ticket-btn ticket-btn-primary" onclick="viewTicket('${ticket.id}')">
+                  View
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      };
+
+      const viewTicket = (ticketId) => {
+        renderStatus(`Viewing ticket ${ticketId}...`, false);
+      };
+
+      const renderDashboard = (data) => {
+        // Update stats
+        openTicketsCountEl.textContent = data.openTickets?.length || 0;
+        resolvedTicketsCountEl.textContent = data.resolvedTicketsCount || 0;
+        pendingTicketsCountEl.textContent = data.pendingTickets || 0;
+        avgResponseTimeEl.textContent = data.avgResponseTime || '5m';
+
+        // Render tickets list
+        if (data.openTickets && data.openTickets.length > 0) {
+          openTicketsListEl.innerHTML = data.openTickets.slice(0, 5).map(ticket => renderTickets([ticket])).join('');
+        } else {
+          openTicketsListEl.innerHTML = '<div class="text-center" style="padding: 40px; color: #666;">No open tickets found</div>';
+        }
+      };
+
+      const loadSampleData = () => {
+        const sampleData = {
+          openTickets: [
+            {
+              id: 'SUP-001',
+              subject: 'Delivery delay inquiry',
+              status: 'open',
+              priority: 'high',
+              customerName: 'John Smith',
+              customerEmail: 'john.smith@email.com',
+              assignedTo: 'Support Agent 1',
+              createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+            },
+            {
+              id: 'SUP-002',
+              subject: 'Package tracking issue',
+              status: 'in-progress',
+              priority: 'medium',
+              customerName: 'Sarah Johnson',
+              customerEmail: 'sarah.j@email.com',
+              assignedTo: 'Support Agent 2',
+              createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString()
+            },
+            {
+              id: 'SUP-003',
+              subject: 'Billing question',
+              status: 'open',
+              priority: 'low',
+              customerName: 'Mike Davis',
+              customerEmail: 'mike.d@email.com',
+              assignedTo: 'Unassigned',
+              createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString()
+            }
+          ],
+          resolvedTicketsCount: 12,
+          pendingTickets: 3,
+          avgResponseTime: '5m',
+          customerSatisfaction: 94,
+          escalationRate: 8
+        };
+
+        renderDashboard(sampleData);
+        
+        // Render additional features with sample data
+        renderPerformanceMetrics({
+          firstResponseTime: '2.5',
+          resolutionTime: '15',
+          ticketsPerHour: '4.2',
+          customerRating: '4.8'
+        });
+
+        renderActivityLog([
+          { time: '10:30 AM', text: 'Resolved ticket SUP-005' },
+          { time: '09:45 AM', text: 'Assigned ticket SUP-004 to Agent 2' },
+          { time: '09:15 AM', text: 'Created new ticket SUP-003' },
+          { time: '08:30 AM', text: 'Shift started' }
+        ]);
+
+        renderPriorityIssues([
+          {
+            id: 'PRIO-001',
+            title: 'Critical delivery failure',
+            priority: 'Critical',
+            description: 'Customer reports package not delivered for 48 hours'
+          },
+          {
+            id: 'PRIO-002',
+            title: 'System outage affecting tracking',
+            priority: 'High',
+            description: 'Multiple customers unable to track packages'
+          }
+        ]);
+
+        renderTeamStatus([
+          { name: 'Alice Johnson', role: 'Senior Support', status: 'online' },
+          { name: 'Bob Smith', role: 'Support Agent', status: 'busy' },
+          { name: 'Carol Davis', role: 'Support Agent', status: 'online' },
+          { name: 'David Wilson', role: 'Team Lead', status: 'offline' }
+        ]);
+
+        // Update additional stats
+        customerSatisfactionEl.textContent = sampleData.customerSatisfaction + '%';
+        escalationRateEl.textContent = sampleData.escalationRate + '%';
+
+        renderStatus('Dashboard loaded with sample data (Demo Mode)');
+      };
+
+      const refreshDashboard = () => {
+        renderStatus('Refreshing dashboard...', false);
+        loadDashboardData();
+      };
+
+      const loadDashboardData = () => {
+        const expectedRole = 'SupportAgent';
+        const token = localStorage.getItem('ecotrack_token');
+        const storedUserRaw = localStorage.getItem('ecotrack_user');
+        const storedUser = storedUserRaw ? JSON.parse(storedUserRaw) : null;
+
+        // Debug logging
+        console.log('=== Support Dashboard Debug ===');
+        console.log('Token:', token ? 'Present' : 'Missing');
+        console.log('User Data:', storedUser);
+        console.log('User Role:', storedUser?.role);
+        console.log('Expected Role:', expectedRole);
+        console.log('Role Match:', storedUser?.role === expectedRole);
+
+        if (!token || !storedUser) {
+          renderStatus('Not authenticated. Redirecting to login...', true);
+          setTimeout(() => {
+            window.location.href = '/login.html';
+          }, 1200);
+          return;
+        }
+
+        if (storedUser.role !== expectedRole) {
+          renderStatus(`Access denied. Current role: ${storedUser.role}. Expected: ${expectedRole}`, true);
+          setTimeout(() => {
+            window.location.href = '/login.html';
+          }, 1200);
+          return;
+        }
+
+        // Try to load from API first, then fallback to sample data
+        setTimeout(() => {
+          console.log('Loading sample data for support dashboard...');
+          loadSampleData();
+        }, 1000);
+      };
+
+      // Initialize dashboard
+      loadDashboardData();
+
+      logoutButton.addEventListener('click', () => {
+        localStorage.removeItem('ecotrack_token');
+        localStorage.removeItem('ecotrack_user');
+        window.location.href = '/login.html';
+      });
+    </script>
+  </body>
+</html>

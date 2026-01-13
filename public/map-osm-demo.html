@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoTrack - OpenStreetMap Demo</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="js/leaflet.css" />
+    
+    <!-- Leaflet JavaScript -->
+    <script src="js/leaflet.js"></script>
+    
+    <!-- Test script loading -->
+    <script>
+        console.log('Script loading test...');
+        console.log('Leaflet loaded:', typeof L !== 'undefined');
+        if (typeof L === 'undefined') {
+            console.error('Leaflet failed to load from local file');
+            // Fallback to CDN
+            document.write('<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script>');
+        }
+    </script>
+    
+    <!-- EcoTrack CSS -->
+    <link rel="stylesheet" href="/css/driver-dashboard.css">
+    
+    <style>
+        .map-container {
+            height: 500px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            background: #f0f0f0;
+            position: relative;
+        }
+        
+        .map-demo-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .route-visualization {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .route-point {
+            display: inline-block;
+            padding: 8px 16px;
+            margin: 5px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .pickup-point {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .delivery-point {
+            background: #28a745;
+            color: white;
+        }
+        
+        .current-point {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .map-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .control-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #27ae60 0%, #16a085 100%);
+            color: white;
+        }
+        
+        .control-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+        }
+        
+        .control-button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 4px solid #27ae60;
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #27ae60;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .api-info {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .api-info h4 {
+            color: #1976d2;
+            margin-top: 0;
+        }
+        
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #27ae60;
+            z-index: 1000;
+        }
+        
+        .route-info {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .provider-badge {
+            background: #27ae60;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        
+        .leaflet-fallback {
+            background: #f8f9fa;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #27ae60; margin-bottom: 10px;">🗺️ EcoTrack OpenStreetMap Demo</h1>
+            <p style="color: #666;">Free and open-source mapping with Leaflet.js and OpenRouteService</p>
+        </header>
+
+        <div class="map-demo-content">
+            <div class="map-controls">
+                <button class="control-button" onclick="testFunction()">
+                    🧪 Test Function
+                </button>
+                <button class="control-button" onclick="initializeMap()">
+                    🗺️ Initialize Map
+                </button>
+                <button class="control-button" onclick="addRouteMarkers()">
+                    📍 Add Route Markers
+                </button>
+                <button class="control-button" onclick="calculateRoute()">
+                    🚀 Calculate Route
+                </button>
+                <button class="control-button" onclick="simulateTracking()">
+                    📍 Simulate Tracking
+                </button>
+                <button class="control-button secondary" onclick="trackExistingParcel()">
+                    📦 Track Existing Parcel
+                </button>
+                <button class="control-button secondary" onclick="resetMap()">
+                    🔄 Reset Map
+                </button>
+            </div>
+
+            <div id="mapContainer" class="map-container">
+                <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #666;">
+                    <p>Loading map components...</p>
+                </div>
+            </div>
+
+            <div id="statusMessage"></div>
+
+            <div class="route-visualization" id="routeVisualization" style="display: none;">
+                <h3>🚚 Route Information</h3>
+                <div id="routePoints"></div>
+                <div id="routeInfo" class="route-info" style="display: none;">
+                    <p><strong>Distance:</strong> <span id="routeDistance">--</span> km</p>
+                    <p><strong>Duration:</strong> <span id="routeDuration">--</span> minutes</p>
+                    <p><strong>Provider:</strong> <span id="routeProvider">--</span></p>
+                </div>
+            </div>
+
+            <div class="stats-grid" id="statsGrid" style="display: none;">
+                <div class="stat-card">
+                    <div class="stat-value" id="distanceStat">0</div>
+                    <div class="stat-label">Distance (km)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="timeStat">0</div>
+                    <div class="stat-label">Time (minutes)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="speedStat">0</div>
+                    <div class="stat-label">Avg Speed (km/h)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="carbonStat">0</div>
+                    <div class="stat-label">Carbon (kg CO₂)</div>
+                </div>
+            </div>
+
+            <div class="api-info">
+                <h4>🔌 OpenStreetMap Integration</h4>
+                <p><strong>Map Provider:</strong> OpenStreetMap <span class="provider-badge">FREE</span></p>
+                <p><strong>Routing Service:</strong> OpenRouteService <span class="provider-badge">FREE TIER</span></p>
+                <p><strong>Visualization:</strong> Leaflet.js <span class="provider-badge">OPEN SOURCE</span></p>
+                <p><strong>Features Available:</strong></p>
+                <ul>
+                    <li>✅ Interactive map with zoom and pan</li>
+                    <li>✅ Custom markers for pickup/delivery locations</li>
+                    <li>✅ Route visualization with polylines</li>
+                    <li>✅ Distance and time calculations</li>
+                    <li>✅ Fallback to Haversine formula</li>
+                    <li>✅ No billing or API limits (free tier)</li>
+                </ul>
+                <p style="font-size: 14px; margin-top: 10px;">
+                    <strong>Note:</strong> This implementation uses OpenStreetMap and OpenRouteService as 
+                    free and open-source alternatives suitable for prototype development and academic demonstration. 
+                    No real-time traffic or production-grade navigation features are included.
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Leaflet JavaScript -->
+    <script>
+        let map = null;
+        let pickupMarker = null;
+        let deliveryMarker = null;
+        let currentLocationMarker = null;
+        let routeLine = null;
+        let trackingInterval = null;
+
+        // Sample coordinates for demonstration
+        const sampleRoutes = [
+            {
+                pickup: { lat: 40.7128, lng: -74.0060, name: "Distribution Center" },
+                delivery: { lat: 40.7580, lng: -73.9855, name: "Times Square" }
+            },
+            {
+                pickup: { lat: 40.7580, lng: -73.9855, name: "Times Square" },
+                delivery: { lat: 40.7489, lng: -73.9680, name: "Grand Central" }
+            }
+        ];
+
+        let currentRouteIndex = 0;
+
+        function showStatus(message, isError = false) {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.innerHTML = `
+                <div style="padding: 15px; border-radius: 8px; margin: 20px 0; ${
+                    isError ? 'background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;' 
+                    : 'background: #d4edda; color: #155724; border: 1px solid #c3e6cb;'
+                }">
+                    ${message}
+                </div>
+            `;
+            setTimeout(() => {
+                statusEl.innerHTML = '';
+            }, 5000);
+        }
+
+        function updateStats(distance, time) {
+            document.getElementById('distanceStat').textContent = distance.toFixed(1);
+            document.getElementById('timeStat').textContent = Math.round(time);
+            document.getElementById('speedStat').textContent = (distance / (time / 60)).toFixed(1);
+            document.getElementById('carbonStat').textContent = (distance * 0.15).toFixed(2); // Approximate carbon calculation
+        }
+
+        // Test function to verify JavaScript is working
+        function testFunction() {
+            console.log('testFunction() called successfully!');
+            alert('JavaScript is working! Functions are accessible.');
+        }
+
+        function initializeMap() {
+            console.log('initializeMap() called');
+            try {
+                // Check if Leaflet is available
+                console.log('Checking L object...');
+                if (typeof L === 'undefined') {
+                    console.error('L is undefined!');
+                    showStatus('Error: Leaflet.js library is not loaded', true);
+                    return;
+                }
+                console.log('L object found:', L);
+
+                showStatus('Initializing OpenStreetMap with Leaflet.js...', false);
+                
+                // Clear the placeholder content
+                console.log('Clearing map container...');
+                document.getElementById('mapContainer').innerHTML = '';
+                
+                // Initialize Leaflet map centered on New York
+                console.log('Creating map...');
+                map = L.map('mapContainer').setView([40.7128, -74.0060], 13);
+                console.log('Map created:', map);
+                
+                // Add OpenStreetMap tiles
+                console.log('Adding tiles...');
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                    maxZoom: 19
+                }).addTo(map);
+                console.log('Tiles added');
+
+                showStatus('OpenStreetMap initialized successfully!', false);
+            } catch (error) {
+                console.error('Error in initializeMap:', error);
+                showStatus('Error initializing map: ' + error.message, true);
+            }
+        }
+
+        function showFallbackMap() {
+            const mapContainer = document.getElementById('mapContainer');
+            mapContainer.innerHTML = `
+                <div class="leaflet-fallback">
+                    <h3>🗺️ Map Library Loading Issue</h3>
+                    <p><strong>Problem:</strong> Leaflet.js library failed to load from CDN</p>
+                    <p><strong>Solution:</strong> Download Leaflet.js locally or check internet connection</p>
+                    <div style="margin: 20px 0;">
+                        <h4>Manual Download Instructions:</h4>
+                        <p>1. Download Leaflet.js from: <a href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" target="_blank">Leaflet CDN</a></p>
+                        <p>2. Save as: <code>/public/js/leaflet.js</code></p>
+                        <p>3. Refresh this page</p>
+                    </div>
+                    <div style="margin: 20px 0;">
+                        <h4>Alternative Solutions:</h4>
+                        <p>• Check internet connection</p>
+                        <p>• Try different browser</p>
+                        <p>• Disable ad blockers temporarily</p>
+                        <p>• Use local server instead of file:// protocol</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function addRouteMarkers() {
+            if (!map) {
+                showStatus('Please initialize the map first', true);
+                return;
+            }
+
+            try {
+                const route = sampleRoutes[currentRouteIndex];
+                
+                // Clear existing markers
+                if (pickupMarker) map.removeLayer(pickupMarker);
+                if (deliveryMarker) map.removeLayer(deliveryMarker);
+                if (currentLocationMarker) map.removeLayer(currentLocationMarker);
+                if (routeLine) map.removeLayer(routeLine);
+
+                // Add pickup marker (blue)
+                pickupMarker = L.marker([route.pickup.lat, route.pickup.lng])
+                    .addTo(map)
+                    .bindPopup(`<strong>Pickup:</strong> ${route.pickup.name}`);
+
+                // Add delivery marker (green)
+                deliveryMarker = L.marker([route.delivery.lat, route.delivery.lng])
+                    .addTo(map)
+                    .bindPopup(`<strong>Delivery:</strong> ${route.delivery.name}`);
+
+                // Fit map to show both markers
+                const group = new L.featureGroup([pickupMarker, deliveryMarker]);
+                map.fitBounds(group.getBounds().pad(0.1));
+
+                // Update route visualization
+                document.getElementById('routeVisualization').style.display = 'block';
+                document.getElementById('routePoints').innerHTML = `
+                    <div class="route-point pickup-point">📍 ${route.pickup.name}</div>
+                    <div class="route-point delivery-point">🎯 ${route.delivery.name}</div>
+                `;
+
+                showStatus('Route markers added successfully!', false);
+                currentRouteIndex = (currentRouteIndex + 1) % sampleRoutes.length;
+            } catch (error) {
+                showStatus('Error adding markers: ' + error.message, true);
+            }
+        }
+
+        async function calculateRoute() {
+            if (!map || !pickupMarker || !deliveryMarker) {
+                showStatus('Please add route markers first', true);
+                return;
+            }
+
+            try {
+                showStatus('Calculating route using OpenRouteService...', false);
+                
+                const route = sampleRoutes[currentRouteIndex - 1] || sampleRoutes[0];
+                
+                // Try OpenRouteService API directly
+                const orsApiKey = 'YOUR_OPENROUTESERVICE_API_KEY'; // Replace with actual key or use demo
+                const orsUrl = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${orsApiKey}&start=${route.pickup.lng},${route.pickup.lat}&end=${route.delivery.lng},${route.delivery.lat}`;
+                
+                try {
+                    const response = await fetch(orsUrl);
+                    if (response.ok) {
+                        const data = await response.json();
+                        displayRoute(data);
+                        showStatus('Route calculated successfully using OpenRouteService!', false);
+                        return;
+                    }
+                } catch (orsError) {
+                    console.log('OpenRouteService failed, trying backend API...');
+                }
+                
+                // Fallback to sample data if OpenRouteService fails
+                displayRoute(null);
+                showStatus('Using sample route data (Demo Mode)', false);
+                return;
+                
+                // Fallback to backend API
+                const backendResponse = await fetch('/api/routes/optimize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        pickupLocation: route.pickup,
+                        deliveryLocation: route.delivery,
+                        options: { routeType: 'shortest' }
+                    })
+                });
+
+                if (backendResponse.ok) {
+                    const data = await backendResponse.json();
+                    displayRoute(data.data);
+                    showStatus('Route calculated successfully using backend API!', false);
+                } else {
+                    // Fallback to sample data if API fails
+                    displayRoute(null); // This will trigger the fallback in displayRoute
+                    showStatus('Using sample route data (Demo Mode)', false);
+                }
+            } catch (error) {
+                console.error('Route calculation error:', error);
+                displayRoute(null); // This will trigger the fallback in displayRoute
+                showStatus('Using sample route data (Demo Mode)', false);
+            }
+        }
+
+        function displayRoute(routeData) {
+            // Clear existing route line
+            if (routeLine) map.removeLayer(routeLine);
+
+            let latlngs = [];
+            let distance = 0;
+            let duration = 0;
+            let provider = 'Unknown';
+
+            // Handle OpenRouteService response
+            if (routeData && routeData.features && routeData.features[0]) {
+                const feature = routeData.features[0];
+                const coordinates = feature.geometry.coordinates;
+                
+                // Convert coordinates to [lat, lng] format for Leaflet
+                latlngs = coordinates.map(coord => [coord[1], coord[0]]);
+                
+                // Get distance and duration from OpenRouteService
+                const properties = feature.properties;
+                distance = properties.segments[0].distance / 1000; // Convert to km
+                duration = properties.segments[0].duration / 60; // Convert to minutes
+                provider = 'OpenRouteService';
+            }
+            // Handle backend API response
+            else if (routeData && routeData.totalDistanceKm) {
+                const route = sampleRoutes[currentRouteIndex - 1] || sampleRoutes[0];
+                latlngs = [
+                    [route.pickup.lat, route.pickup.lng],
+                    [route.delivery.lat, route.delivery.lng]
+                ];
+                distance = routeData.totalDistanceKm;
+                duration = routeData.totalDurationMinutes;
+                provider = routeData.provider || 'Backend API';
+            }
+            // Fallback to direct line with sample data
+            else {
+                const route = sampleRoutes[currentRouteIndex - 1] || sampleRoutes[0];
+                
+                // Create a more realistic route path with intermediate waypoints
+                latlngs = createRealisticRoute(route.pickup, route.delivery);
+                
+                // Calculate approximate distance (using route path)
+                distance = calculateRouteDistance(latlngs);
+            document.getElementById('routeDuration').textContent = Math.round(duration);
+            document.getElementById('routeProvider').textContent = provider;
+
+            // Show stats grid
+            document.getElementById('statsGrid').style.display = 'grid';
+        }
+
+        function displayDirectRoute() {
+            const route = sampleRoutes[currentRouteIndex - 1] || sampleRoutes[0];
+            
+            // Simple straight line between points
+            routeLine = L.polyline([
+                [route.pickup.lat, route.pickup.lng],
+                [route.delivery.lat, route.delivery.lng]
+            ], {
+                color: '#27ae60',
+                weight: 4,
+                opacity: 0.7,
+                dashArray: '10, 10'
+            }).addTo(map);
+
+            // Calculate approximate distance (straight line)
+            const distance = calculateStraightLineDistance(route.pickup, route.delivery);
+            const time = distance / 0.5; // Assume 30 km/h average speed
+            
+            updateStats(distance, time);
+            document.getElementById('routeInfo').style.display = 'block';
+            document.getElementById('routeDistance').textContent = distance.toFixed(1);
+            document.getElementById('routeDuration').textContent = Math.round(time);
+            document.getElementById('routeProvider').textContent = 'Direct Line (Fallback)';
+            
+            document.getElementById('statsGrid').style.display = 'grid';
+        }
+
+        function calculateRouteDistance(latlngs) {
+            let totalDistance = 0;
+            for (let i = 0; i < latlngs.length - 1; i++) {
+                const lat1 = latlngs[i][0];
+                const lng1 = latlngs[i][1];
+                const lat2 = latlngs[i + 1][0];
+                const lng2 = latlngs[i + 1][1];
+                totalDistance += calculateStraightLineDistance(
+                    { lat: lat1, lng: lng1 },
+                    { lat: lat2, lng: lng2 }
+                );
+            }
+            return totalDistance;
+        }
+
+        function createRealisticRoute(pickup, delivery) {
+            // Sri Lankan major highway and road network simulation
+            const sriLankanRoadNetwork = {
+                // Major highways connecting cities
+                highways: [
+                    { name: 'A1', points: [[6.9271, 79.8612], [7.2906, 80.6337], [8.5874, 81.2152]] }, // Colombo-Kandy-Trincomalee
+                    { name: 'A2', points: [[6.9271, 79.8612], [6.0535, 80.2200], [5.9481, 80.2176]] }, // Colombo-Galle-Matara
+                    { name: 'A3', points: [[6.9271, 79.8612], [7.4797, 80.3527], [8.3454, 80.4037]] }, // Colombo-Negombo-Puttalam
+                    { name: 'A4', points: [[6.9271, 79.8612], [7.4797, 80.3527], [8.5874, 81.2152], [9.6615, 80.0255]] }, // Colombo-Trincomalee-Jaffna
+                    { name: 'A6', points: [[7.2906, 80.6337], [8.3454, 80.4037], [9.6615, 80.0255]] }, // Kandy-Jaffna via A6
+                    { name: 'A9', points: [[6.9271, 79.8612], [7.2906, 80.6337], [8.3454, 80.4037], [9.6615, 80.0255]] } // Colombo-Kandy-Jaffna main road
+                ],
+                // Major cities with coordinates
+                cities: {
+                    'Colombo': [6.9271, 79.8612],
+                    'Kandy': [7.2906, 80.6337],
+                    'Galle': [6.0535, 80.2200],
+                    'Jaffna': [9.6615, 80.0255],
+                    'Trincomalee': [8.5874, 81.2152],
+                    'Batticaloa': [7.7102, 81.6887],
+                    'Negombo': [7.4797, 80.3527],
+                    'Kurunegala': [7.4818, 80.3647],
+                    'Anuradhapura': [8.3114, 80.4037],
+                    'Dambulla': [7.8612, 80.6599],
+                    'Matale': [7.4675, 80.6234],
+                    'Nuwara Eliya': [6.9689, 80.7821],
+                    'Ratnapura': [6.6828, 80.3997],
+                    'Badulla': [6.9934, 81.0550]
+                }
+            };
+
+            const waypoints = [];
+            
+            // Add pickup point
+            waypoints.push([pickup.lat, pickup.lng]);
+            
+            // Find nearest major cities to pickup and delivery
+            const pickupCity = findNearestCity(pickup, sriLankanRoadNetwork.cities);
+            const deliveryCity = findNearestCity(delivery, sriLankanRoadNetwork.cities);
+            
+            // Create realistic route using major highways and intermediate cities
+            if (pickupCity && deliveryCity) {
+                // Check if there's a direct highway connection
+                const directHighway = findDirectHighway(pickupCity, deliveryCity, sriLankanRoadNetwork.highways);
+                
+                if (directHighway) {
+                    // Use highway route
+                    waypoints.push(...directHighway.points);
+                } else {
+                    // Create multi-city route via major hubs
+                    const intermediateCities = findIntermediateCities(pickupCity, deliveryCity, sriLankanRoadNetwork.cities);
+                    
+                    // Add intermediate city waypoints
+                    for (const city of intermediateCities) {
+                        waypoints.push(city);
+                    }
+                }
+            } else {
+                // Fallback to curved route simulation
+                const latDiff = delivery.lat - pickup.lat;
+                const lngDiff = delivery.lng - pickup.lng;
+                const steps = 8; // More steps for more realistic routes
+                
+                for (let i = 1; i <= steps; i++) {
+                    const progress = i / (steps + 1);
+                    
+                    // Add realistic road curves and detours
+                    const curve1 = Math.sin(progress * Math.PI * 2) * 0.015;
+                    const curve2 = Math.cos(progress * Math.PI * 1.5) * 0.01;
+                    
+                    // Calculate intermediate position with road-like curves
+                    const lat = pickup.lat + (latDiff * progress) + (curve1 * latDiff) + (curve2 * 0.5);
+                    const lng = pickup.lng + (lngDiff * progress) + (curve1 * lngDiff) + (curve2 * 0.3);
+                    
+                    waypoints.push([lat, lng]);
+                }
+            }
+            
+            // Add delivery point
+            waypoints.push([delivery.lat, delivery.lng]);
+            
+            // Smooth the route by removing duplicate points and optimizing
+            return smoothRoute(waypoints);
+        }
+
+        function findNearestCity(point, cities) {
+            let nearestCity = null;
+            let minDistance = Infinity;
+            
+            for (const [cityName, cityCoords] of Object.entries(cities)) {
+                const distance = calculateStraightLineDistance(
+                    { lat: point.lat, lng: point.lng },
+                    { lat: cityCoords[0], lng: cityCoords[1] }
+                );
+                
+                if (distance < minDistance && distance < 0.5) { // Within 50km
+                    minDistance = distance;
+                    nearestCity = { name: cityName, coords: cityCoords };
+                }
+            }
+            
+            return nearestCity;
+        }
+
+        function findDirectHighway(pickupCity, deliveryCity, highways) {
+            for (const highway of highways) {
+                const pickupOnHighway = isPointOnHighway(pickupCity.coords, highway.points);
+                const deliveryOnHighway = isPointOnHighway(deliveryCity.coords, highway.points);
+                
+                if (pickupOnHighway && deliveryOnHighway) {
+                    return highway;
+                }
+            }
+            return null;
+        }
+
+        function isPointOnHighway(point, highwayPoints) {
+            for (let i = 0; i < highwayPoints.length; i++) {
+                const distance = calculateStraightLineDistance(
+                    { lat: point[0], lng: point[1] },
+                    { lat: highwayPoints[i][0], lng: highwayPoints[i][1] }
+                );
+                if (distance < 0.3) { // Within 30km of highway
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function findIntermediateCities(pickupCity, deliveryCity, cities) {
+            const intermediateCities = [];
+            
+            // Common routing hubs in Sri Lanka
+            const routingHubs = ['Kurunegala', 'Anuradhapura', 'Dambulla', 'Matale', 'Nuwara Eliya'];
+            
+            for (const hubName of routingHubs) {
+                if (cities[hubName]) {
+                    const hubCoords = cities[hubName];
+                    
+                    // Check if hub is reasonable intermediate point
+                    const pickupToHub = calculateStraightLineDistance(
+                        { lat: pickupCity.coords[0], lng: pickupCity.coords[1] },
+                        { lat: hubCoords[0], lng: hubCoords[1] }
+                    );
+                    
+                    const hubToDelivery = calculateStraightLineDistance(
+                        { lat: hubCoords[0], lng: hubCoords[1] },
+                        { lat: deliveryCity.coords[0], lng: deliveryCity.coords[1] }
+                    );
+                    
+                    const directDistance = calculateStraightLineDistance(
+                        { lat: pickupCity.coords[0], lng: pickupCity.coords[1] },
+                        { lat: deliveryCity.coords[0], lng: deliveryCity.coords[1] }
+                    );
+                    
+                    // Add hub if it creates a reasonable route (not too much detour)
+                    if (pickupToHub + hubToDelivery < directDistance * 1.8) {
+                        intermediateCities.push(hubCoords);
+                    }
+                }
+            }
+            
+            return intermediateCities.slice(0, 2); // Limit to 2 intermediate cities
+        }
+
+        function smoothRoute(waypoints) {
+            const smoothed = [];
+            
+            for (let i = 0; i < waypoints.length; i++) {
+                // Remove duplicate points
+                if (i === 0 || 
+                    Math.abs(waypoints[i][0] - waypoints[i-1][0]) > 0.0001 || 
+                    Math.abs(waypoints[i][1] - waypoints[i-1][1]) > 0.0001) {
+                    smoothed.push(waypoints[i]);
+                }
+            }
+            
+            return smoothed;
+        }
+
+        function calculateStraightLineDistance(point1, point2) {
+            const R = 6371; // Earth's radius in km
+            const dLat = (point2.lat - point1.lat) * Math.PI / 180;
+            const dLng = (point2.lng - point1.lng) * Math.PI / 180;
+            
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(point1.lat * Math.PI / 180) * Math.cos(point2.lat * Math.PI / 180) *
+                      Math.sin(dLng/2) * Math.sin(dLng/2);
+            
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        function simulateTracking() {
+            if (!routeLine) {
+                showStatus('Please calculate a route first', true);
+                return;
+            }
+
+            if (trackingInterval) {
+                clearInterval(trackingInterval);
+                trackingInterval = null;
+                showStatus('GPS tracking stopped', false);
+                return;
+            }
+
+            showStatus('Starting GPS tracking simulation...', false);
+            
+            const route = sampleRoutes[currentRouteIndex - 1] || sampleRoutes[0];
+            let progress = 0;
+            
+            trackingInterval = setInterval(() => {
+                progress += 2; // Move 2% each interval
+                
+                if (progress > 100) progress = 0;
+                
+                // Calculate position along route
+                const lat = route.pickup.lat + (route.delivery.lat - route.pickup.lat) * (progress / 100);
+                const lng = route.pickup.lng + (route.delivery.lng - route.pickup.lng) * (progress / 100);
+                
+                // Update or create current location marker
+                if (currentLocationMarker) {
+                    currentLocationMarker.setLatLng([lat, lng]);
+                } else {
+                    currentLocationMarker = L.marker([lat, lng], {
+                        icon: L.divIcon({
+                            className: 'current-location-marker',
+                            html: '<div style="background: #ffc107; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white;"></div>',
+                            iconSize: [12, 12]
+                        })
+                    }).addTo(map);
+                }
+            }, 500);
+            
+            showStatus('GPS tracking active - vehicle moving along route', false);
+        }
+
+        function trackExistingParcel() {
+            if (!map) {
+                showStatus('Please initialize map first', true);
+                return;
+            }
+
+            try {
+                // Check if there's a specific parcel to track
+                const trackingParcelId = localStorage.getItem('tracking_parcel_id');
+                const storedParcels = localStorage.getItem('ecotrack_parcels');
+                const parcels = storedParcels ? JSON.parse(storedParcels) : [];
+                
+                let parcelData;
+                
+                if (trackingParcelId) {
+                    // Track specific parcel from parcel manager
+                    parcelData = parcels.find(p => p.id === trackingParcelId);
+                    if (!parcelData) {
+                        showStatus(`Parcel ${trackingParcelId} not found`, true);
+                        return;
+                    }
+                    showStatus(`Tracking parcel ${parcelData.id} from parcel manager...`, false);
+                } else {
+                    // Fallback to sample parcel
+                    showStatus('Tracking existing parcel PKG-2024-001...', false);
+                    parcelData = {
+                        id: 'PKG-2024-001',
+                        status: 'PickedUp',
+                        recipientName: 'Ranjan Perera',
+                        recipientPhone: '+94-77-123-4567',
+                        pickupLocation: 'Colombo',
+                        deliveryLocation: 'Kandy',
+                        driver: 'John Silva'
+                    };
+                }
+                
+                // Get coordinates for Sri Lankan cities
+                const cityCoordinates = {
+                    'Colombo': { lat: 6.9271, lng: 79.8612 },
+                    'Kandy': { lat: 7.2906, lng: 80.6337 },
+                    'Galle': { lat: 6.0535, lng: 80.2200 },
+                    'Jaffna': { lat: 9.6615, lng: 80.0255 },
+                    'Trincomalee': { lat: 8.5874, lng: 81.2152 },
+                    'Batticaloa': { lat: 7.7102, lng: 81.6887 }
+                };
+                
+                const pickupCoords = cityCoordinates[parcelData.pickupLocation] || { lat: 6.9271, lng: 79.8612 };
+                const deliveryCoords = cityCoordinates[parcelData.deliveryLocation] || { lat: 7.2906, lng: 80.6337 };
+                
+                // Clear existing markers and routes
+                if (pickupMarker) map.removeLayer(pickupMarker);
+                if (deliveryMarker) map.removeLayer(deliveryMarker);
+                if (currentLocationMarker) map.removeLayer(currentLocationMarker);
+                if (routeLine) map.removeLayer(routeLine);
+
+                // Enhanced parcel data
+                const enhancedParcelData = {
+                    ...parcelData,
+                    pickup: { 
+                        lat: pickupCoords.lat, 
+                        lng: pickupCoords.lng, 
+                        name: `${parcelData.pickupLocation} Distribution Center` 
+                    },
+                    delivery: { 
+                        lat: deliveryCoords.lat, 
+                        lng: deliveryCoords.lng, 
+                        name: `${parcelData.deliveryLocation} Delivery Point` 
+                    },
+                    currentLocation: { 
+                        lat: pickupCoords.lat + (deliveryCoords.lat - pickupCoords.lat) * 0.3, 
+                        lng: pickupCoords.lng + (deliveryCoords.lng - pickupCoords.lng) * 0.3 
+                    },
+                    estimatedDelivery: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours from now
+                    driver: { 
+                        name: parcelData.driver || 'Unassigned', 
+                        phone: parcelData.recipientPhone || '+94-77-123-4567' 
+                    }
+                };
+
+                // Add pickup marker
+                pickupMarker = L.marker([enhancedParcelData.pickup.lat, enhancedParcelData.pickup.lng])
+                    .addTo(map)
+                    .bindPopup(`
+                        <div style="padding: 10px; min-width: 200px;">
+                            <strong>📦 Parcel ${enhancedParcelData.id}</strong><br>
+                            <strong>Status:</strong> <span style="color: #27ae60;">${enhancedParcelData.status}</span><br>
+                            <strong>Pickup:</strong> ${enhancedParcelData.pickup.name}<br>
+                            <strong>Delivery:</strong> ${enhancedParcelData.delivery.name}<br>
+                            <strong>Recipient:</strong> ${enhancedParcelData.recipientName || 'N/A'}<br>
+                            <strong>Driver:</strong> ${enhancedParcelData.driver.name}<br>
+                            <strong>Phone:</strong> ${enhancedParcelData.driver.phone}<br>
+                            <strong>Est. Delivery:</strong> ${enhancedParcelData.estimatedDelivery.toLocaleString()}
+                        </div>
+                    `);
+
+                // Add delivery marker
+                deliveryMarker = L.marker([enhancedParcelData.delivery.lat, enhancedParcelData.delivery.lng])
+                    .addTo(map)
+                    .bindPopup(`
+                        <div style="padding: 10px;">
+                            <strong>🎯 Destination</strong><br>
+                            <strong>${enhancedParcelData.delivery.name}</strong><br>
+                            <strong>Recipient:</strong> ${enhancedParcelData.recipientName || 'N/A'}<br>
+                            <em>Final delivery point</em>
+                        </div>
+                    `);
+
+                // Add current location marker (moving)
+                currentLocationMarker = L.marker([enhancedParcelData.currentLocation.lat, enhancedParcelData.currentLocation.lng], {
+                    icon: L.divIcon({
+                        className: 'moving-marker',
+                        html: '<div style="background: #e74c3c; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px;">🚚</div>',
+                        iconSize: [20, 20],
+                        iconAnchor: [10, 10]
+                    })
+                }).addTo(map)
+                .bindPopup(`
+                    <div style="padding: 10px;">
+                        <strong>🚚 Current Location</strong><br>
+                        <strong>Driver:</strong> ${enhancedParcelData.driver.name}<br>
+                        <strong>Status:</strong> <span style="color: #27ae60;">${enhancedParcelData.status}</span><br>
+                        <strong>Phone:</strong> ${enhancedParcelData.driver.phone}<br>
+                        <strong>Recipient:</strong> ${enhancedParcelData.recipientName || 'N/A'}<br>
+                        <em>Real-time tracking</em>
+                    </div>
+                `);
+
+                // Create realistic route for existing parcel
+                const routeWaypoints = createRealisticRoute(enhancedParcelData.pickup, enhancedParcelData.delivery);
+                
+                // Draw route
+                routeLine = L.polyline(routeWaypoints, {
+                    color: '#27ae60',
+                    weight: 4,
+                    opacity: 0.7,
+                    smoothFactor: 2,
+                    dashArray: '10, 5'
+                }).addTo(map);
+
+                // Add route animation (simulate movement)
+                animateParcelMovement(enhancedParcelData);
+
+                // Fit map to show all points
+                const group = new L.featureGroup([pickupMarker, deliveryMarker, currentLocationMarker]);
+                map.fitBounds(group.getBounds().pad(0.1));
+
+                // Update UI
+                document.getElementById('routeVisualization').style.display = 'block';
+                document.getElementById('routePoints').innerHTML = `
+                    <div class="route-point pickup-point">📦 Parcel: ${enhancedParcelData.id}</div>
+                    <div class="route-point pickup-point">📍 From: ${enhancedParcelData.pickup.name}</div>
+                    <div class="route-point delivery-point">🎯 To: ${enhancedParcelData.delivery.name}</div>
+                    <div class="route-point tracking-point">🚚 Status: <span style="color: #27ae60;">${enhancedParcelData.status}</span></div>
+                    ${enhancedParcelData.recipientName ? `<div class="route-point tracking-point">👤 Recipient: ${enhancedParcelData.recipientName}</div>` : ''}
+                `;
+
+                // Update stats
+                const distance = calculateRouteDistance(routeWaypoints);
+                const time = distance / 0.5; // Assume 50 km/h for delivery
+                updateStats(distance, time);
+                document.getElementById('routeInfo').style.display = 'block';
+                document.getElementById('routeDistance').textContent = distance.toFixed(1);
+                document.getElementById('routeDuration').textContent = Math.round(time);
+                document.getElementById('routeProvider').textContent = 'Live Tracking';
+
+                showStatus(`Successfully tracking parcel ${enhancedParcelData.id} from ${enhancedParcelData.pickup.name} to ${enhancedParcelData.delivery.name}`, false);
+
+                // Clear tracking parcel ID after using it
+                localStorage.removeItem('tracking_parcel_id');
+
+            } catch (error) {
+                showStatus('Error tracking parcel: ' + error.message, true);
+            }
+        }
+
+        function animateParcelMovement(parcelData) {
+            let progress = 0;
+            const routeWaypoints = createRealisticRoute(parcelData.pickup, parcelData.delivery);
+            
+            const animateStep = () => {
+                if (progress < routeWaypoints.length - 1) {
+                    const currentPoint = routeWaypoints[Math.floor(progress)];
+                    if (currentLocationMarker) {
+                        currentLocationMarker.setLatLng(currentPoint);
+                    }
+                    
+                    progress += 0.01; // Slow movement animation
+                    requestAnimationFrame(animateStep);
+                }
+            };
+            
+            // Start animation
+            animateStep();
+        }
+
+        function resetMap() {
+            if (trackingInterval) {
+                clearInterval(trackingInterval);
+                trackingInterval = null;
+            }
+            
+            if (map) {
+                if (pickupMarker) map.removeLayer(pickupMarker);
+                if (deliveryMarker) map.removeLayer(deliveryMarker);
+                if (currentLocationMarker) map.removeLayer(currentLocationMarker);
+                if (routeLine) map.removeLayer(routeLine);
+            }
+            
+            pickupMarker = null;
+            deliveryMarker = null;
+            currentLocationMarker = null;
+            routeLine = null;
+            
+            document.getElementById('routeVisualization').style.display = 'none';
+            document.getElementById('statsGrid').style.display = 'none';
+            document.getElementById('routeInfo').style.display = 'none';
+            
+            showStatus('Map reset successfully', false);
+        }
+
+        // Initialize map on page load
+        window.addEventListener('load', () => {
+            console.log('Page loaded, checking Leaflet...');
+            console.log('L object:', typeof L);
+            console.log('L object:', L);
+            
+            setTimeout(() => {
+                console.log('Attempting to initialize map...');
+                initializeMap();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoTrack - Parcel Manager</title>
+    <link rel="stylesheet" href="/css/general.css">
+    <style>
+        .parcel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .parcel-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-left: 4px solid #3498db;
+        }
+        
+        .parcel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .parcel-id {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .parcel-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .status-pending { background: #f39c12; color: white; }
+        .status-pickedup { background: #27ae60; color: white; }
+        .status-intransit { background: #3498db; color: white; }
+        .status-delivered { background: #8e44ad; color: white; }
+        
+        .location-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .location-item {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .location-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .location-value {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .driver-info {
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-track {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-edit {
+            background: #f39c12;
+            color: white;
+        }
+        
+        .btn-delete {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .btn-small:hover {
+            opacity: 0.8;
+            transform: translateY(-1px);
+        }
+        
+        .create-parcel-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #27ae60;
+            color: white;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .create-parcel-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .location-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .sri-lankan-cities {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        
+        .city-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .city-btn {
+            padding: 8px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .city-btn:hover {
+            background: #3498db;
+            color: white;
+        }
+        
+        .city-btn.selected {
+            background: #27ae60;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📦 Parcel Management</h1>
+            <button onclick="window.location.href='/supervisor-dashboard.html'" class="btn-secondary">← Back to Dashboard</button>
+        </header>
+        
+        <main>
+            <section class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Active Parcels</h2>
+                    <div class="card-icon">📋</div>
+                </div>
+                <div id="parcels-list">
+                    <div class="loading">Loading parcels...</div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Create Parcel Modal -->
+    <div id="createParcelModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Parcel</h2>
+                <span class="close" onclick="closeCreateModal()">&times;</span>
+            </div>
+            <form id="createParcelForm">
+                <div class="form-group">
+                    <label for="parcelId">Parcel ID</label>
+                    <input type="text" id="parcelId" name="parcelId" required placeholder="PKG-2024-XXX">
+                </div>
+                
+                <div class="form-group">
+                    <label for="recipientName">Recipient Name</label>
+                    <input type="text" id="recipientName" name="recipientName" required placeholder="John Smith">
+                </div>
+                
+                <div class="form-group">
+                    <label for="recipientPhone">Recipient Phone</label>
+                    <input type="tel" id="recipientPhone" name="recipientPhone" required placeholder="+94-XX-XXXX-XXXX">
+                </div>
+                
+                <div class="location-selector">
+                    <div class="form-group">
+                        <label for="pickupLocation">Pickup Location</label>
+                        <input type="text" id="pickupLocation" name="pickupLocation" required placeholder="Colombo">
+                        <div class="sri-lankan-cities">
+                            <div class="location-label">Select Major City:</div>
+                            <div class="city-grid" id="pickupCities">
+                                <button type="button" class="city-btn" onclick="selectCity('pickup', 'Colombo')">Colombo</button>
+                                <button type="button" class="city-btn" onclick="selectCity('pickup', 'Kandy')">Kandy</button>
+                                <button type="button" class="city-btn" onclick="selectCity('pickup', 'Galle')">Galle</button>
+                                <button type="button" class="city-btn" onclick="selectCity('pickup', 'Jaffna')">Jaffna</button>
+                                <button type="button" class="city-btn" onclick="selectCity('pickup', 'Trincomalee')">Trincomalee</button>
+                                <button type="button" class="city-btn" onclick="selectCity('pickup', 'Batticaloa')">Batticaloa</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="deliveryLocation">Delivery Location</label>
+                        <input type="text" id="deliveryLocation" name="deliveryLocation" required placeholder="Kandy">
+                        <div class="sri-lankan-cities">
+                            <div class="location-label">Select Major City:</div>
+                            <div class="city-grid" id="deliveryCities">
+                                <button type="button" class="city-btn" onclick="selectCity('delivery', 'Colombo')">Colombo</button>
+                                <button type="button" class="city-btn" onclick="selectCity('delivery', 'Kandy')">Kandy</button>
+                                <button type="button" class="city-btn" onclick="selectCity('delivery', 'Galle')">Galle</button>
+                                <button type="button" class="city-btn" onclick="selectCity('delivery', 'Jaffna')">Jaffna</button>
+                                <button type="button" class="city-btn" onclick="selectCity('delivery', 'Trincomalee')">Trincomalee</button>
+                                <button type="button" class="city-btn" onclick="selectCity('delivery', 'Batticaloa')">Batticaloa</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="priority">Priority</label>
+                    <select id="priority" name="priority">
+                        <option value="normal">Normal</option>
+                        <option value="express">Express</option>
+                        <option value="overnight">Overnight</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="driver">Assign Driver</label>
+                    <select id="driver" name="driver">
+                        <option value="">Select Driver...</option>
+                        <option value="John Silva">John Silva</option>
+                        <option value="Kamal Perera">Kamal Perera</option>
+                        <option value="Nimal Fernando">Nimal Fernando</option>
+                        <option value="Sunil Rajapaksa">Sunil Rajapaksa</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Create Parcel</button>
+                    <button type="button" class="btn" onclick="closeCreateModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <button class="create-parcel-btn" onclick="openCreateModal()">+</button>
+
+    <script>
+        // Sri Lankan city coordinates
+        const cityCoordinates = {
+            'Colombo': { lat: 6.9271, lng: 79.8612 },
+            'Kandy': { lat: 7.2906, lng: 80.6337 },
+            'Galle': { lat: 6.0535, lng: 80.2200 },
+            'Jaffna': { lat: 9.6615, lng: 80.0255 },
+            'Trincomalee': { lat: 8.5874, lng: 81.2152 },
+            'Batticaloa': { lat: 7.7102, lng: 81.6887 }
+        };
+
+        let parcels = [];
+        let selectedPickupCity = '';
+        let selectedDeliveryCity = '';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadParcels();
+            loadSampleParcels();
+        });
+
+        function loadParcels() {
+            const storedParcels = localStorage.getItem('ecotrack_parcels');
+            if (storedParcels) {
+                parcels = JSON.parse(storedParcels);
+                displayParcels();
+            }
+        }
+
+        function loadSampleParcels() {
+            if (parcels.length === 0) {
+                parcels = [
+                    {
+                        id: 'PKG-2024-001',
+                        recipientName: 'Ranjan Perera',
+                        recipientPhone: '+94-77-123-4567',
+                        pickupLocation: 'Colombo',
+                        deliveryLocation: 'Kandy',
+                        status: 'pickedup',
+                        priority: 'express',
+                        driver: 'John Silva',
+                        createdAt: new Date('2024-01-10T08:00:00'),
+                        estimatedDelivery: new Date('2024-01-10T18:00:00')
+                    },
+                    {
+                        id: 'PKG-2024-002',
+                        recipientName: 'Nalini Fernando',
+                        recipientPhone: '+94-71-987-6543',
+                        pickupLocation: 'Galle',
+                        deliveryLocation: 'Jaffna',
+                        status: 'intransit',
+                        priority: 'normal',
+                        driver: 'Kamal Perera',
+                        createdAt: new Date('2024-01-10T09:30:00'),
+                        estimatedDelivery: new Date('2024-01-11T12:00:00')
+                    },
+                    {
+                        id: 'PKG-2024-003',
+                        recipientName: 'Sunil Bandara',
+                        recipientPhone: '+94-76-555-1234',
+                        pickupLocation: 'Trincomalee',
+                        deliveryLocation: 'Batticaloa',
+                        status: 'pending',
+                        priority: 'overnight',
+                        driver: '',
+                        createdAt: new Date('2024-01-10T10:00:00'),
+                        estimatedDelivery: new Date('2024-01-11T08:00:00')
+                    }
+                ];
+                saveParcels();
+                displayParcels();
+            }
+        }
+
+        function displayParcels() {
+            const container = document.getElementById('parcels-list');
+            
+            if (parcels.length === 0) {
+                container.innerHTML = '<div class="text-center" style="padding: 40px; color: #666;">No parcels found. Click the + button to create a new parcel.</div>';
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="parcel-grid">
+                    ${parcels.map(parcel => createParcelCard(parcel)).join('')}
+                </div>
+            `;
+        }
+
+        function createParcelCard(parcel) {
+            const pickupCoords = cityCoordinates[parcel.pickupLocation] || { lat: 6.9271, lng: 79.8612 };
+            const deliveryCoords = cityCoordinates[parcel.deliveryLocation] || { lat: 7.2906, lng: 80.6337 };
+            
+            return `
+                <div class="parcel-card">
+                    <div class="parcel-header">
+                        <div class="parcel-id">${parcel.id}</div>
+                        <div class="parcel-status status-${parcel.status}">${parcel.status}</div>
+                    </div>
+                    
+                    <div class="location-info">
+                        <div class="location-item">
+                            <div class="location-label">📍 Pickup</div>
+                            <div class="location-value">${parcel.pickupLocation}</div>
+                            <div class="location-label" style="font-size: 10px; margin-top: 5px;">${pickupCoords.lat.toFixed(4)}, ${pickupCoords.lng.toFixed(4)}</div>
+                        </div>
+                        <div class="location-item">
+                            <div class="location-label">🎯 Delivery</div>
+                            <div class="location-value">${parcel.deliveryLocation}</div>
+                            <div class="location-label" style="font-size: 10px; margin-top: 5px;">${deliveryCoords.lat.toFixed(4)}, ${deliveryCoords.lng.toFixed(4)}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="driver-info">
+                        <div class="location-label">👤 Recipient</div>
+                        <div class="location-value">${parcel.recipientName}</div>
+                        <div class="location-label">📞 Phone</div>
+                        <div class="location-value">${parcel.recipientPhone}</div>
+                        ${parcel.driver ? `<div class="location-label">🚚 Driver</div><div class="location-value">${parcel.driver}</div>` : ''}
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="btn-small btn-track" onclick="trackParcel('${parcel.id}')">📍 Track</button>
+                        <button class="btn-small btn-edit" onclick="editParcel('${parcel.id}')">✏️ Edit</button>
+                        <button class="btn-small btn-delete" onclick="deleteParcel('${parcel.id}')">🗑️ Delete</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectCity(type, city) {
+            if (type === 'pickup') {
+                document.getElementById('pickupLocation').value = city;
+                selectedPickupCity = city;
+                
+                // Update pickup city buttons
+                document.querySelectorAll('#pickupCities .city-btn').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+                event.target.classList.add('selected');
+            } else {
+                document.getElementById('deliveryLocation').value = city;
+                selectedDeliveryCity = city;
+                
+                // Update delivery city buttons
+                document.querySelectorAll('#deliveryCities .city-btn').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+                event.target.classList.add('selected');
+            }
+        }
+
+        function trackParcel(parcelId) {
+            // Store the parcel ID for tracking
+            localStorage.setItem('tracking_parcel_id', parcelId);
+            window.location.href = '/map-osm-demo-fixed.html';
+        }
+
+        function editParcel(parcelId) {
+            const parcel = parcels.find(p => p.id === parcelId);
+            if (parcel) {
+                // Populate form with parcel data
+                document.getElementById('parcelId').value = parcel.id;
+                document.getElementById('recipientName').value = parcel.recipientName;
+                document.getElementById('recipientPhone').value = parcel.recipientPhone;
+                document.getElementById('pickupLocation').value = parcel.pickupLocation;
+                document.getElementById('deliveryLocation').value = parcel.deliveryLocation;
+                document.getElementById('priority').value = parcel.priority;
+                document.getElementById('driver').value = parcel.driver;
+                
+                openCreateModal();
+            }
+        }
+
+        function deleteParcel(parcelId) {
+            if (confirm(`Are you sure you want to delete parcel ${parcelId}?`)) {
+                parcels = parcels.filter(p => p.id !== parcelId);
+                saveParcels();
+                displayParcels();
+            }
+        }
+
+        function openCreateModal() {
+            document.getElementById('createParcelModal').style.display = 'block';
+        }
+
+        function closeCreateModal() {
+            document.getElementById('createParcelModal').style.display = 'none';
+            document.getElementById('createParcelForm').reset();
+        }
+
+        function saveParcels() {
+            localStorage.setItem('ecotrack_parcels', JSON.stringify(parcels));
+        }
+
+        // Form submission
+        document.getElementById('createParcelForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const newParcel = {
+                id: formData.get('parcelId'),
+                recipientName: formData.get('recipientName'),
+                recipientPhone: formData.get('recipientPhone'),
+                pickupLocation: formData.get('pickupLocation'),
+                deliveryLocation: formData.get('deliveryLocation'),
+                priority: formData.get('priority'),
+                driver: formData.get('driver'),
+                status: 'pending',
+                createdAt: new Date(),
+                estimatedDelivery: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours from now
+            };
+            
+            parcels.push(newParcel);
+            saveParcels();
+            displayParcels();
+            closeCreateModal();
+            
+            alert(`Parcel ${newParcel.id} created successfully!`);
+        });
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('createParcelModal');
+            if (event.target === modal) {
+                closeCreateModal();
+            }
+        }
+    </script>
+</body>
+</html>

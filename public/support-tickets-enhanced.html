@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support Agent - Enhanced Ticket Management</title>
+    <link rel="stylesheet" href="/css/support.css">
+    <link rel="stylesheet" href="/css/parcel-integration.css">
+    <style>
+        /* Support Agent-specific overrides */
+        .header { background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); }
+        .btn-primary { background: #9b59b6; }
+        .btn-primary:hover { background: #8e44ad; }
+        .filters button { background: #9b59b6; }
+        .filters button:hover { background: #8e44ad; }
+        .pagination button.active { background: #27ae60; }
+        .stat-number { color: #27ae60; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Enhanced Ticket Management - Support Agent</h1>
+        <div class="user-info">
+            <span id="userName">Loading...</span>
+            <button onclick="logout()" class="btn btn-warning" style="margin-left: 1rem;">Logout</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="messageContainer"></div>
+
+        <!-- Statistics -->
+        <div class="stats" id="statsContainer">
+            <div class="stat-card">
+                <div class="stat-number" id="totalTickets">0</div>
+                <div class="stat-label">Total Tickets</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="openTickets">0</div>
+                <div class="stat-label">Open</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="inProgressTickets">0</div>
+                <div class="stat-label">In Progress</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="resolvedTickets">0</div>
+                <div class="stat-label">Resolved</div>
+            </div>
+        </div>
+
+        <div class="filters">
+            <form id="filterForm">
+                <select id="statusFilter">
+                    <option value="">All Status</option>
+                    <option value="Open">Open</option>
+                    <option value="InProgress">In Progress</option>
+                    <option value="Resolved">Resolved</option>
+                </select>
+                <select id="priorityFilter">
+                    <option value="">All Priority</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                </select>
+                <select id="parcelStatusFilter">
+                    <option value="">All Parcel Status</option>
+                    <option value="Created">Created</option>
+                    <option value="PickedUp">Picked Up</option>
+                    <option value="InTransit">In Transit</option>
+                    <option value="OutForDelivery">Out for Delivery</option>
+                    <option value="Delivered">Delivered</option>
+                    <option value="Returned">Returned</option>
+                    <option value="Lost">Lost</option>
+                </select>
+                <input type="text" id="searchFilter" placeholder="Search tickets...">
+                <button type="submit">Apply Filters</button>
+                <button type="button" onclick="clearFilters()">Clear</button>
+            </form>
+        </div>
+
+        <div id="ticketsContainer" class="tickets-grid">
+            <div class="loading">Loading tickets...</div>
+        </div>
+
+        <div id="paginationContainer" class="pagination"></div>
+    </div>
+
+    <!-- Enhanced Ticket Details Modal -->
+    <div id="enhancedDetailsModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2>Ticket & Parcel Details</h2>
+                <span class="close" onclick="closeEnhancedDetailsModal()">&times;</span>
+            </div>
+            <div id="enhancedTicketDetails">
+                <!-- Enhanced details will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Update Modal -->
+    <div id="statusModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Update Ticket Status</h2>
+                <span class="close" onclick="closeStatusModal()">&times;</span>
+            </div>
+            <form id="statusForm">
+                <div class="form-group">
+                    <label for="newStatus">New Status:</label>
+                    <select id="newStatus" required>
+                        <option value="">Select Status...</option>
+                        <option value="InProgress">In Progress</option>
+                        <option value="Resolved">Resolved</option>
+                    </select>
+                </div>
+                <div id="resolutionFields" style="display: none;">
+                    <div class="form-group">
+                        <label for="resolution">Resolution:</label>
+                        <textarea id="resolution" placeholder="Describe how the issue was resolved..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="resolutionCategory">Resolution Category:</label>
+                        <select id="resolutionCategory">
+                            <option value="">Select Category...</option>
+                            <option value="Delivered">Delivered</option>
+                            <option value="Refunded">Refunded</option>
+                            <option value="Replaced">Replaced</option>
+                            <option value="Informational">Informational</option>
+                            <option value="SystemUpdate">System Update</option>
+                            <option value="ProcessImprovement">Process Improvement</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="customerSatisfaction">Customer Satisfaction (1-5):</label>
+                        <select id="customerSatisfaction">
+                            <option value="">Select Rating...</option>
+                            <option value="1">1 - Very Dissatisfied</option>
+                            <option value="2">2 - Dissatisfied</option>
+                            <option value="3">3 - Neutral</option>
+                            <option value="4">4 - Satisfied</option>
+                            <option value="5">5 - Very Satisfied</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="internalNotes">Internal Notes:</label>
+                    <textarea id="internalNotes" placeholder="Add internal notes about this status update..."></textarea>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Update Status</button>
+                    <button type="button" class="btn" onclick="closeStatusModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Parcel Tracking Modal -->
+    <div id="parcelTrackingModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2>Parcel Tracking</h2>
+                <span class="close" onclick="closeParcelTrackingModal()">&times;</span>
+            </div>
+            <div id="parcelTrackingContent">
+                <!-- Parcel tracking will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/ticket-api.js"></script>
+    <script src="/js/ticket-parcel-integration.js"></script>
+    <script>
+        let currentPage = 1;
+        let currentFilters = {};
+        let currentTicketId = null;
+        let currentTicketStatus = null;
+        let ticketParcelAPI = new TicketParcelIntegration();
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            loadMyTicketsWithParcels();
+            loadMyStats();
+        });
+
+        // Check authentication
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            if (user.role !== 'SupportAgent') {
+                alert('Access denied. Support agents only.');
+                window.location.href = '/login.html';
+                return;
+            }
+
+            document.getElementById('userName').textContent = user.name;
+        }
+
+        // Load my tickets with parcel information
+        async function loadMyTicketsWithParcels(page = 1) {
+            try {
+                const params = {
+                    page: page,
+                    limit: 20,
+                    ...currentFilters
+                };
+
+                const data = await ticketParcelAPI.getTicketsWithParcelSummary(params);
+                displayTicketsWithParcels(data.data.tickets);
+                displayPagination(data.data.pagination);
+                currentPage = page;
+            } catch (error) {
+                showMessage('Error loading tickets: ' + error.message, 'error');
+            }
+        }
+
+        // Load my statistics
+        async function loadMyStats() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/tickets/my?limit=1000', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const tickets = data.data.tickets;
+                    
+                    const stats = {
+                        total: tickets.length,
+                        open: tickets.filter(t => t.status === 'Open').length,
+                        inProgress: tickets.filter(t => t.status === 'InProgress').length,
+                        resolved: tickets.filter(t => t.status === 'Resolved').length
+                    };
+
+                    document.getElementById('totalTickets').textContent = stats.total;
+                    document.getElementById('openTickets').textContent = stats.open;
+                    document.getElementById('inProgressTickets').textContent = stats.inProgress;
+                    document.getElementById('resolvedTickets').textContent = stats.resolved;
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Display tickets with parcel information
+        function displayTicketsWithParcels(tickets) {
+            const container = document.getElementById('ticketsContainer');
+            
+            if (tickets.length === 0) {
+                container.innerHTML = '<div class="loading">No tickets found.</div>';
+                return;
+            }
+
+            container.innerHTML = tickets.map(ticket => 
+                EnhancedTicketDisplay.displayTicketWithParcel(ticket)
+            ).join('');
+        }
+
+        // Display pagination
+        function displayPagination(pagination) {
+            const container = document.getElementById('paginationContainer');
+            
+            if (pagination.totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = '';
+            
+            // Previous button
+            if (pagination.hasPrevPage) {
+                html += `<button onclick="loadMyTicketsWithParcels(${pagination.prevPage})">Previous</button>`;
+            }
+
+            // Page numbers
+            for (let i = 1; i <= pagination.totalPages; i++) {
+                const activeClass = i === pagination.currentPage ? 'active' : '';
+                html += `<button class="${activeClass}" onclick="loadMyTicketsWithParcels(${i})">${i}</button>`;
+            }
+
+            // Next button
+            if (pagination.hasNextPage) {
+                html += `<button onclick="loadMyTicketsWithParcels(${pagination.nextPage})">Next</button>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // View enhanced ticket details
+        async function viewTicketWithParcel(ticketId) {
+            try {
+                const data = await ticketParcelAPI.getTicketWithParcel(ticketId);
+                document.getElementById('enhancedTicketDetails').innerHTML = 
+                    EnhancedTicketDisplay.displayTicketDetailsWithParcel(data.data);
+                document.getElementById('enhancedDetailsModal').style.display = 'block';
+            } catch (error) {
+                showMessage('Error loading ticket details: ' + error.message, 'error');
+            }
+        }
+
+        // View parcel tracking
+        async function viewParcelTracking(ticketId) {
+            try {
+                const data = await ticketParcelAPI.getTicketParcelTracking(ticketId);
+                document.getElementById('parcelTrackingContent').innerHTML = 
+                    ParcelUI.displayParcelTracking(data.data.trackingInfo);
+                document.getElementById('parcelTrackingModal').style.display = 'block';
+            } catch (error) {
+                showMessage('Error loading parcel tracking: ' + error.message, 'error');
+            }
+        }
+
+        // Open status update modal
+        function openStatusModal(ticketId, currentStatus) {
+            currentTicketId = ticketId;
+            currentTicketStatus = currentStatus;
+            
+            document.getElementById('statusModal').style.display = 'block';
+            
+            // Set available status options based on current status
+            const statusSelect = document.getElementById('newStatus');
+            statusSelect.innerHTML = '<option value="">Select Status...</option>';
+            
+            if (currentStatus === 'Open') {
+                statusSelect.innerHTML += '<option value="InProgress">In Progress</option><option value="Resolved">Resolved</option>';
+            } else if (currentStatus === 'InProgress') {
+                statusSelect.innerHTML += '<option value="Resolved">Resolved</option>';
+            }
+        }
+
+        // Close status modal
+        function closeStatusModal() {
+            document.getElementById('statusModal').style.display = 'none';
+            document.getElementById('statusForm').reset();
+            document.getElementById('resolutionFields').style.display = 'none';
+            currentTicketId = null;
+            currentTicketStatus = null;
+        }
+
+        // Close enhanced details modal
+        function closeEnhancedDetailsModal() {
+            document.getElementById('enhancedDetailsModal').style.display = 'none';
+        }
+
+        // Close parcel tracking modal
+        function closeParcelTrackingModal() {
+            document.getElementById('parcelTrackingModal').style.display = 'none';
+        }
+
+        // Handle status change
+        document.getElementById('newStatus').addEventListener('change', function() {
+            const newStatus = this.value;
+            const resolutionFields = document.getElementById('resolutionFields');
+            
+            if (newStatus === 'Resolved') {
+                resolutionFields.style.display = 'block';
+            } else {
+                resolutionFields.style.display = 'none';
+            }
+        });
+
+        // Handle status form submission
+        document.getElementById('statusForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const newStatus = document.getElementById('newStatus').value;
+            const resolution = document.getElementById('resolution').value;
+            const resolutionCategory = document.getElementById('resolutionCategory').value;
+            const customerSatisfaction = document.getElementById('customerSatisfaction').value;
+            const internalNotes = document.getElementById('internalNotes').value;
+
+            if (!newStatus) {
+                showMessage('Please select a new status', 'error');
+                return;
+            }
+
+            const updateData = {
+                status: newStatus,
+                internalNotes
+            };
+
+            if (newStatus === 'Resolved') {
+                updateData.resolution = resolution;
+                updateData.resolutionCategory = resolutionCategory;
+                if (customerSatisfaction) {
+                    updateData.customerSatisfaction = parseInt(customerSatisfaction);
+                }
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/tickets/${currentTicketId}/status`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(updateData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('Ticket status updated successfully', 'success');
+                    closeStatusModal();
+                    loadMyTicketsWithParcels(currentPage);
+                    loadMyStats();
+                } else {
+                    showMessage(data.message || 'Status update failed', 'error');
+                }
+            } catch (error) {
+                showMessage('Error updating status: ' + error.message, 'error');
+            }
+        });
+
+        // Handle filter form submission
+        document.getElementById('filterForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            currentFilters = {
+                status: document.getElementById('statusFilter').value,
+                priority: document.getElementById('priorityFilter').value,
+                parcelStatus: document.getElementById('parcelStatusFilter').value,
+                search: document.getElementById('searchFilter').value
+            };
+
+            // Remove empty filters
+            Object.keys(currentFilters).forEach(key => {
+                if (!currentFilters[key]) {
+                    delete currentFilters[key];
+                }
+            });
+
+            loadMyTicketsWithParcels(1);
+        });
+
+        // Clear filters
+        function clearFilters() {
+            document.getElementById('filterForm').reset();
+            currentFilters = {};
+            loadMyTicketsWithParcels(1);
+        }
+
+        // Show message
+        function showMessage(message, type) {
+            const container = document.getElementById('messageContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type;
+            messageDiv.textContent = message;
+            container.appendChild(messageDiv);
+
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login.html';
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const enhancedModal = document.getElementById('enhancedDetailsModal');
+            const statusModal = document.getElementById('statusModal');
+            const trackingModal = document.getElementById('parcelTrackingModal');
+            
+            if (event.target === enhancedModal) {
+                closeEnhancedDetailsModal();
+            }
+            if (event.target === statusModal) {
+                closeStatusModal();
+            }
+            if (event.target === trackingModal) {
+                closeParcelTrackingModal();
+            }
+        }
+    </script>
+</body>
+</html>

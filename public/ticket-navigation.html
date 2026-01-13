@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Management - Navigation</title>
+    <link rel="stylesheet" href="/css/general.css">
+    <style>
+        .nav-buttons { display: grid; gap: 1rem; }
+        .nav-button { 
+            display: block; 
+            padding: 1rem 2rem; 
+            background: #3498db; 
+            color: white; 
+            text-decoration: none; 
+            border-radius: 5px; 
+            font-weight: bold; 
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .nav-button:hover { 
+            background: #2980b9; 
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .nav-button.supervisor { background: #e74c3c; }
+        .nav-button.supervisor:hover { background: #c0392b; }
+        .nav-button.support { background: #27ae60; }
+        .nav-button.support:hover { background: #229954; }
+        .user-info { 
+            background: #ecf0f1; 
+            padding: 1rem; 
+            border-radius: 5px; 
+            margin-bottom: 2rem; 
+        }
+        .user-info strong { color: #2c3e50; }
+        .logout-btn { 
+            background: #95a5a6; 
+            color: white; 
+            padding: 0.5rem 1rem; 
+            border: none; 
+            border-radius: 3px; 
+            cursor: pointer; 
+            margin-top: 1rem;
+        }
+        .logout-btn:hover { background: #7f8c8d; }
+    </style>
+</head>
+<body>
+    <div class="nav-container">
+        <div class="nav-header">
+            <h1>Ticket Management</h1>
+            <p>EcoTrack Logistics System</p>
+        </div>
+
+        <div class="user-info">
+            <strong>Welcome:</strong> <span id="userName">Loading...</span>
+            <div><strong>Role:</strong> <span id="userRole">Loading...</span></div>
+        </div>
+
+        <div class="nav-buttons">
+            <button id="supervisorBtn" class="nav-button supervisor" onclick="navigateToSupervisor()" style="display: none;">
+                Supervisor Dashboard
+            </button>
+            <button id="supportBtn" class="nav-button support" onclick="navigateToSupport()" style="display: none;">
+                Support Agent Dashboard
+            </button>
+        </div>
+
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+
+    <script>
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthAndNavigate();
+        });
+
+        // Check authentication and show appropriate navigation
+        function checkAuthAndNavigate() {
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            // Display user info
+            document.getElementById('userName').textContent = user.name || 'Unknown';
+            document.getElementById('userRole').textContent = user.role || 'Unknown';
+
+            // Show appropriate button based on role
+            if (user.role === 'Supervisor') {
+                document.getElementById('supervisorBtn').style.display = 'block';
+            } else if (user.role === 'SupportAgent') {
+                document.getElementById('supportBtn').style.display = 'block';
+            } else {
+                // For other roles, show both buttons or handle appropriately
+                document.getElementById('supervisorBtn').style.display = 'block';
+                document.getElementById('supportBtn').style.display = 'block';
+            }
+        }
+
+        // Navigate to supervisor dashboard
+        function navigateToSupervisor() {
+            window.location.href = '/supervisor-tickets.html';
+        }
+
+        // Navigate to support agent dashboard
+        function navigateToSupport() {
+            window.location.href = '/support-tickets.html';
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login.html';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoTrack - Map Test</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .map-container {
+            height: 500px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .controls {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .control-button {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        .control-button:hover {
+            background: #229954;
+            transform: translateY(-2px);
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗺️ EcoTrack Map Test</h1>
+        
+        <div class="controls">
+            <button class="control-button" onclick="testFunction()">🧪 Test JavaScript</button>
+            <button class="control-button" onclick="initializeMap()">🗺️ Initialize Map</button>
+            <button class="control-button" onclick="testRoute()">📦 Test PKG-2024-001</button>
+        </div>
+        
+        <div id="status" class="status">Ready to test...</div>
+        
+        <div id="mapContainer" class="map-container">
+            Loading map...
+        </div>
+    </div>
+
+    <script>
+        let map = null;
+        let pickupMarker = null;
+        let deliveryMarker = null;
+        let routeLine = null;
+
+        // Test function
+        function testFunction() {
+            console.log('testFunction() called successfully!');
+            showStatus('JavaScript working! All functions accessible.', 'success');
+        }
+
+        // Show status function
+        function showStatus(message, type = 'success') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+
+        // Initialize map
+        function initializeMap() {
+            console.log('initializeMap() called');
+            try {
+                if (typeof L === 'undefined') {
+                    showStatus('Leaflet.js not loaded!', 'error');
+                    return;
+                }
+
+                showStatus('Initializing map...', 'success');
+                
+                // Clear container
+                document.getElementById('mapContainer').innerHTML = '';
+                
+                // Create map centered on Sri Lanka
+                map = L.map('mapContainer').setView([7.8731, 80.7718], 8);
+                
+                // Add OpenStreetMap tiles
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors',
+                    maxZoom: 19
+                }).addTo(map);
+
+                showStatus('Map initialized successfully!', 'success');
+                
+            } catch (error) {
+                console.error('Error initializing map:', error);
+                showStatus('Error: ' + error.message, 'error');
+            }
+        }
+
+        // Test PKG-2024-001 route
+        function testRoute() {
+            if (!map) {
+                showStatus('Please initialize map first!', 'error');
+                return;
+            }
+
+            try {
+                showStatus('Testing PKG-2024-001 realistic route...', 'success');
+
+                // Clear existing markers
+                if (pickupMarker) map.removeLayer(pickupMarker);
+                if (deliveryMarker) map.removeLayer(deliveryMarker);
+                if (routeLine) map.removeLayer(routeLine);
+
+                // PKG-2024-001: Colombo to Kandy
+                const pickup = { lat: 6.9271, lng: 79.8612 }; // Colombo
+                const delivery = { lat: 7.2906, lng: 80.6337 }; // Kandy
+
+                // Create realistic route using A1 highway
+                const routeWaypoints = [
+                    [pickup.lat, pickup.lng], // Colombo
+                    [7.0, 79.9], // Near Nittambuwa
+                    [7.1, 80.0], // Near Kurunegala
+                    [7.2, 80.3], // Near Mawanella
+                    [delivery.lat, delivery.lng] // Kandy
+                ];
+
+                // Add pickup marker
+                pickupMarker = L.marker([pickup.lat, pickup.lng])
+                    .addTo(map)
+                    .bindPopup('<strong>📦 PKG-2024-001</strong><br>Pickup: Colombo Distribution Center');
+
+                // Add delivery marker
+                deliveryMarker = L.marker([delivery.lat, delivery.lng])
+                    .addTo(map)
+                    .bindPopup('<strong>🎯 Destination</strong><br>Delivery: Kandy Delivery Point');
+
+                // Add route line
+                routeLine = L.polyline(routeWaypoints, {
+                    color: '#27ae60',
+                    weight: 4,
+                    opacity: 0.7,
+                    dashArray: '10, 5'
+                }).addTo(map);
+
+                // Add waypoint markers
+                routeWaypoints.forEach((point, index) => {
+                    if (index > 0 && index < routeWaypoints.length - 1) {
+                        L.circleMarker(point, {
+                            radius: 4,
+                            fillColor: '#e74c3c',
+                            color: '#fff',
+                            weight: 2
+                        }).addTo(map)
+                        .bindPopup(`<strong>🛣️ Waypoint ${index}</strong><br>A1 Highway checkpoint`);
+                    }
+                });
+
+                // Fit map to show route
+                const group = new L.featureGroup([pickupMarker, deliveryMarker]);
+                map.fitBounds(group.getBounds().pad(0.1));
+
+                showStatus('PKG-2024-001 route loaded! Realistic A1 highway path from Colombo to Kandy.', 'success');
+
+            } catch (error) {
+                console.error('Error creating route:', error);
+                showStatus('Error: ' + error.message, 'error');
+            }
+        }
+
+        // Test on load
+        window.addEventListener('load', () => {
+            console.log('Page loaded, ready for testing');
+            showStatus('Page loaded. Click buttons to test.', 'success');
+        });
+    </script>
+</body>
+</html>

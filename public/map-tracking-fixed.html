@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoTrack - PKG-2024-002 Live Tracking</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- EcoTrack CSS -->
+    <link rel="stylesheet" href="/css/driver-dashboard.css">
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .map-container {
+            height: 500px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .map-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+        
+        .control-button {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            min-width: 150px;
+        }
+        
+        .control-button:hover {
+            background: #229954;
+            transform: translateY(-2px);
+        }
+        
+        .control-button.secondary {
+            background: #3498db;
+        }
+        
+        .control-button.secondary:hover {
+            background: #2980b9;
+        }
+        
+        .status-message {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .route-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 4px solid #27ae60;
+        }
+        
+        .route-visualization {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .custom-div-icon {
+            background: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        
+        .tracking-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .tracking-header h2 {
+            color: #2c3e50;
+            margin: 0;
+            font-size: 2rem;
+        }
+        
+        .parcel-highlight {
+            background: linear-gradient(135deg, #27ae60 0%, #16a085 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            display: inline-block;
+            margin: 10px 0;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo-icon">🌿</div>
+                    <div class="logo-text">EcoTrack</div>
+                </div>
+                <div class="header-actions">
+                    <div class="user-info">
+                        <div class="user-avatar">D</div>
+                        <span id="userName">Driver</span>
+                    </div>
+                    <button class="logout-btn" onclick="logout()">Logout</button>
+                </div>
+            </div>
+            <nav class="main-nav">
+                <a href="/driver-dashboard.html">Dashboard</a>
+                <a href="/driver-parcels.html">My Parcels</a>
+                <a href="/driver-route.html" class="active">Current Route</a>
+            </nav>
+        </header>
+
+        <main class="main-content">
+            <div class="content-section">
+                <div class="tracking-header">
+                    <h2>🗺️ Live Route Tracking</h2>
+                    <div class="parcel-highlight">
+                        📦 Currently Tracking: PKG-2024-002
+                    </div>
+                </div>
+                
+                <div class="map-controls">
+                    <button class="control-button" onclick="initializeMap()">
+                        🗺️ Initialize Map
+                    </button>
+                    <button class="control-button" onclick="trackPKG2024002()">
+                        🚀 Track PKG-2024-002
+                    </button>
+                    <button class="control-button" onclick="simulateTracking()">
+                        📍 Start Live Simulation
+                    </button>
+                    <button class="control-button secondary" onclick="stopTracking()">
+                        ⏹️ Stop Tracking
+                    </button>
+                    <button class="control-button secondary" onclick="resetMap()">
+                        🔄 Reset Map
+                    </button>
+                </div>
+
+                <div id="statusMessage"></div>
+                
+                <div class="map-container" id="map"></div>
+                
+                <div id="routeVisualization" style="display: none;">
+                    <h3>📦 PKG-2024-002 Route Information</h3>
+                    <div id="routeInfo"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let map = null;
+        let pickupMarker = null;
+        let deliveryMarker = null;
+        let currentLocationMarker = null;
+        let routeLine = null;
+        let trackingInterval = null;
+
+        // PKG-2024-002 specific data
+        const pkg2024002 = {
+            id: 'PKG-2024-002',
+            pickup: { lat: 6.0535, lng: 80.2200, name: 'Galle Distribution Center' },
+            delivery: { lat: 9.6615, lng: 80.0255, name: 'Jaffna Delivery Point' },
+            recipientName: 'Nalini Fernando',
+            recipientPhone: '+94-71-987-6543',
+            driver: 'Kamal Perera',
+            status: 'InTransit',
+            estimatedDelivery: '2024-01-11 18:00'
+        };
+
+        // Initialize map
+        function initializeMap() {
+            if (map) {
+                showStatus('Map already initialized', false);
+                return;
+            }
+
+            try {
+                // Create map centered on Sri Lanka
+                map = L.map('map').setView([7.8731, 80.7718], 8);
+
+                // Add OpenStreetMap tiles
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors',
+                    maxZoom: 19
+                }).addTo(map);
+
+                showStatus('Map initialized successfully! Click "Track PKG-2024-002" to start tracking.', false);
+                
+            } catch (error) {
+                console.error('Error initializing map:', error);
+                showStatus('Error initializing map. Please refresh and try again.', true);
+            }
+        }
+
+        // Track PKG-2024-002 specifically
+        function trackPKG2024002() {
+            if (!map) {
+                showStatus('Please initialize map first', true);
+                return;
+            }
+
+            try {
+                showStatus('📦 Loading PKG-2024-002 route...', false);
+                
+                // Clear existing markers and routes
+                if (pickupMarker) map.removeLayer(pickupMarker);
+                if (deliveryMarker) map.removeLayer(deliveryMarker);
+                if (currentLocationMarker) map.removeLayer(currentLocationMarker);
+                if (routeLine) map.removeLayer(routeLine);
+
+                // Add pickup marker
+                pickupMarker = L.marker([pkg2024002.pickup.lat, pkg2024002.pickup.lng])
+                    .addTo(map)
+                    .bindPopup(`
+                        <div style="padding: 10px; min-width: 200px;">
+                            <strong>📦 PKG-2024-002</strong><br>
+                            <strong>Status:</strong> <span style="color: #27ae60;">${pkg2024002.status}</span><br>
+                            <strong>Pickup:</strong> ${pkg2024002.pickup.name}<br>
+                            <strong>Driver:</strong> ${pkg2024002.driver}<br>
+                            <strong>Phone:</strong> ${pkg2024002.recipientPhone}
+                        </div>
+                    `);
+
+                // Add delivery marker
+                deliveryMarker = L.marker([pkg2024002.delivery.lat, pkg2024002.delivery.lng])
+                    .addTo(map)
+                    .bindPopup(`
+                        <div style="padding: 10px;">
+                            <strong>🎯 Destination</strong><br>
+                            <strong>Location:</strong> ${pkg2024002.delivery.name}<br>
+                            <strong>Coordinates:</strong> ${pkg2024002.delivery.lat.toFixed(4)}, ${pkg2024002.delivery.lng.toFixed(4)}<br>
+                            <strong>Recipient:</strong> ${pkg2024002.recipientName}<br>
+                            <strong>Phone:</strong> ${pkg2024002.recipientPhone}<br>
+                            <strong>Est. Delivery:</strong> ${pkg2024002.estimatedDelivery}
+                        </div>
+                    `);
+
+                // Create realistic route waypoints
+                const routeWaypoints = createRealisticRoute(pkg2024002.pickup, pkg2024002.delivery);
+                
+                // Draw route line
+                routeLine = L.polyline(routeWaypoints, {
+                    color: '#27ae60',
+                    weight: 4,
+                    opacity: 0.7,
+                    dashArray: '10, 5'
+                }).addTo(map);
+
+                // Fit map to show entire route
+                const bounds = L.latLngBounds([pkg2024002.pickup, pkg2024002.delivery]);
+                map.fitBounds(bounds, { padding: [50, 50] });
+
+                // Show route information
+                document.getElementById('routeVisualization').style.display = 'block';
+                document.getElementById('routeInfo').innerHTML = `
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div>
+                            <h4>📍 Route Information</h4>
+                            <p><strong>Parcel ID:</strong> ${pkg2024002.id}</p>
+                            <p><strong>Pickup:</strong> ${pkg2024002.pickup.name}</p>
+                            <p><strong>Delivery:</strong> ${pkg2024002.delivery.name}</p>
+                            <p><strong>Distance:</strong> ${calculateRouteDistance(routeWaypoints).toFixed(1)} km</p>
+                            <p><strong>Status:</strong> <span style="color: #27ae60;">${pkg2024002.status}</span></p>
+                        </div>
+                        <div>
+                            <h4>👤 Recipient Information</h4>
+                            <p><strong>Name:</strong> ${pkg2024002.recipientName}</p>
+                            <p><strong>Phone:</strong> ${pkg2024002.recipientPhone}</p>
+                            <p><strong>Driver:</strong> ${pkg2024002.driver}</p>
+                            <p><strong>Est. Delivery:</strong> ${pkg2024002.estimatedDelivery}</p>
+                        </div>
+                    </div>
+                `;
+
+                showStatus(`📦 PKG-2024-002 route loaded: Galle → Jaffna`, false);
+
+            } catch (error) {
+                console.error('Error tracking PKG-2024-002:', error);
+                showStatus('Error tracking PKG-2024-002. Please try again.', true);
+            }
+        }
+
+        // Create realistic route waypoints for Galle to Jaffna
+        function createRealisticRoute(pickup, delivery) {
+            const latlngs = [pickup, delivery];
+            
+            // Add intermediate waypoints for A2 highway route
+            const intermediatePoints = [
+                [6.7010, 80.0050], // Near Panadura
+                [6.9271, 79.8612], // Colombo
+                [7.2906, 80.6037],  // Near Kurunegala
+                [8.3420, 80.4120],  // Near Vavuniya
+                [9.0320, 80.2180]   // Near Jaffna
+            ];
+            
+            // Insert intermediate points
+            intermediatePoints.forEach((point, index) => {
+                latlngs.splice(index + 1, 0, point);
+            });
+
+            // Add realistic curves
+            const latDiff = delivery.lat - pickup.lat;
+            const lngDiff = delivery.lng - pickup.lng;
+            const steps = 12;
+            
+            for (let i = 1; i <= steps; i++) {
+                const progress = i / (steps + 1);
+                const curveFactor = Math.sin(progress * Math.PI) * 0.015;
+                
+                const lat = pickup.lat + latDiff * progress + curveFactor;
+                const lng = pickup.lng + lngDiff * progress;
+                
+                latlngs.splice(i, 0, [lat, lng]);
+            }
+
+            return latlngs;
+        }
+
+        // Calculate route distance
+        function calculateRouteDistance(latlngs) {
+            let totalDistance = 0;
+            for (let i = 0; i < latlngs.length - 1; i++) {
+                const lat1 = latlngs[i][0];
+                const lng1 = latlngs[i][1];
+                const lat2 = latlngs[i + 1][0];
+                const lng2 = latlngs[i + 1][1];
+                
+                // Haversine formula
+                const R = 6371;
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLng = (lng2 - lng1) * Math.PI / 180;
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLng/2) * Math.sin(dLng/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                totalDistance += R * c;
+            }
+            return totalDistance;
+        }
+
+        // Simulate live tracking
+        function simulateTracking() {
+            if (!routeLine) {
+                showStatus('Please track PKG-2024-002 first', true);
+                return;
+            }
+
+            if (trackingInterval) {
+                showStatus('Tracking already active', false);
+                return;
+            }
+
+            showStatus('🚚 Starting live GPS tracking simulation...', false);
+            
+            const routeWaypoints = createRealisticRoute(pkg2024002.pickup, pkg2024002.delivery);
+            let progress = 0;
+            
+            trackingInterval = setInterval(() => {
+                progress += 0.5; // Move 0.5% each interval for smooth movement
+                
+                if (progress > 100) {
+                    progress = 100;
+                    clearInterval(trackingInterval);
+                    trackingInterval = null;
+                    showStatus('📦 PKG-2024-002 delivered successfully!', false);
+                    return;
+                }
+                
+                const totalSegments = routeWaypoints.length - 1;
+                const currentSegment = Math.floor((progress / 100) * totalSegments);
+                const segmentProgress = ((progress / 100) * totalSegments) % 1;
+                
+                if (currentSegment < totalSegments) {
+                    const startPoint = routeWaypoints[currentSegment];
+                    const endPoint = routeWaypoints[currentSegment + 1];
+                    
+                    const lat = startPoint[0] + (endPoint[0] - startPoint[0]) * segmentProgress;
+                    const lng = startPoint[1] + (endPoint[1] - startPoint[1]) * segmentProgress;
+                    
+                    if (currentLocationMarker) {
+                        currentLocationMarker.setLatLng([lat, lng]);
+                    } else {
+                        currentLocationMarker = L.marker([lat, lng], {
+                            icon: L.divIcon({
+                                className: 'custom-div-icon',
+                                html: '<div style="background: #e74c3c; color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 16px;">🚚</div>',
+                                iconSize: [30, 30],
+                                iconAnchor: [15, 15]
+                            })
+                        }).addTo(map);
+                    }
+                    
+                    const segmentName = currentSegment === 0 ? 'A2 Highway (Galle-Panadura)' :
+                                       currentSegment === 1 ? 'A2 Highway (Panadura-Colombo)' :
+                                       currentSegment === 2 ? 'A2 Highway (Colombo-Kurunegala)' :
+                                       currentSegment === 3 ? 'A2 Highway (Kurunegala-Vavuniya)' :
+                                       currentSegment === 4 ? 'A2 Highway (Vavuniya-Jaffna)' :
+                                       currentSegment === 5 ? 'A2 Highway (Approaching Jaffna)' :
+                                       `Route Segment ${currentSegment + 1}`;
+                    
+                    showStatus(`🚚 PKG-2024-002 on ${segmentName} - ${Math.round(progress)}% complete`, false);
+                }
+            }, 500); // Update every 500ms for realistic tracking
+            
+            showStatus('📍 Live GPS tracking active for PKG-2024-002', false);
+        }
+
+        // Stop tracking
+        function stopTracking() {
+            if (trackingInterval) {
+                clearInterval(trackingInterval);
+                trackingInterval = null;
+                showStatus('📦 Tracking stopped for PKG-2024-002', false);
+            } else {
+                showStatus('No active tracking to stop', false);
+            }
+        }
+
+        // Reset map
+        function resetMap() {
+            stopTracking();
+            
+            if (map) {
+                if (pickupMarker) map.removeLayer(pickupMarker);
+                if (deliveryMarker) map.removeLayer(deliveryMarker);
+                if (currentLocationMarker) map.removeLayer(currentLocationMarker);
+                if (routeLine) map.removeLayer(routeLine);
+            }
+            
+            pickupMarker = null;
+            deliveryMarker = null;
+            currentLocationMarker = null;
+            routeLine = null;
+            
+            document.getElementById('routeVisualization').style.display = 'none';
+            
+            showStatus('Map reset successfully', false);
+        }
+
+        // Show status message
+        function showStatus(message, isError = false) {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.innerHTML = `
+                <div class="status-message ${isError ? 'status-error' : 'status-success'}">
+                    ${message}
+                </div>
+            `;
+            setTimeout(() => {
+                statusEl.innerHTML = '';
+            }, 5000);
+        }
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem('ecotrack_token');
+            localStorage.removeItem('ecotrack_user');
+            showStatus('Logged out. Redirecting to login...', false);
+            setTimeout(() => {
+                window.location.href = '/login.html';
+            }, 1000);
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            console.log('PKG-2024-002 Tracking page loaded');
+            showStatus('Welcome to PKG-2024-002 tracking. Click "Initialize Map" to begin.', false);
+        });
+    </script>
+</body>
+</html>

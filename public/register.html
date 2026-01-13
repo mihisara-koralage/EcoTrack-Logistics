@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EcoTrack Logistics System - Register</title>
+    <link rel="stylesheet" href="/css/general.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>EcoTrack Logistics System</h1>
+        <p>Create your account</p>
+      </header>
+      
+      <main>
+        <h2>Register</h2>
+        <form id="register-form">
+        <label for="name">Name</label>
+        <input type="text" id="name" name="name" placeholder="Enter your full name" required />
+        
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" placeholder="Enter your email address" required />
+        
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" minlength="8" placeholder="Create a strong password (min 8 characters)" required />
+        
+        <label for="role">Role</label>
+        <select id="role" name="role" required>
+          <option value="Supervisor">Supervisor</option>
+          <option value="Driver">Driver</option>
+          <option value="SupportAgent" selected>SupportAgent</option>
+        </select>
+        
+        <button type="submit">Create Account</button>
+      </form>
+      <p>
+        Already have an account?
+        <a href="/login.html">Sign in here</a>
+      </p>
+      <section id="status" role="status" aria-live="polite"></section>
+    </main>
+    <script>
+      const registerForm = document.getElementById('register-form');
+      const statusEl = document.getElementById('status');
+
+      const renderStatus = (message, isError = false) => {
+        statusEl.textContent = message;
+        statusEl.className = isError ? 'error' : 'success';
+        
+        // Remove animation classes after animation completes
+        setTimeout(() => {
+          statusEl.className = '';
+        }, 3000);
+      };
+
+      // Mock registration function for frontend-only setup
+      async function mockRegister(payload) {
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Basic validation
+        if (!payload.email || !payload.password || !payload.name || !payload.role) {
+          return {
+            success: false,
+            message: 'All fields are required.'
+          };
+        }
+        
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(payload.email)) {
+          return {
+            success: false,
+            message: 'Please enter a valid email address.'
+          };
+        }
+        
+        // Password validation
+        if (payload.password.length < 6) {
+          return {
+            success: false,
+            message: 'Password must be at least 6 characters long.'
+          };
+        }
+        
+        // Simulate successful registration
+        return {
+          success: true,
+          message: 'Account created successfully!',
+          user: {
+            id: Math.floor(Math.random() * 1000) + 1,
+            name: payload.name,
+            email: payload.email,
+            role: payload.role,
+            createdAt: new Date().toISOString()
+          }
+        };
+      }
+
+      registerForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        
+        // Disable form and show loading state
+        const submitButton = registerForm.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton.textContent;
+        submitButton.textContent = 'Creating Account...';
+        submitButton.disabled = true;
+        registerForm.classList.add('loading');
+        
+        renderStatus('Creating account...');
+
+        const payload = {
+          name: registerForm.name.value,
+          email: registerForm.email.value,
+          password: registerForm.password.value,
+          role: registerForm.role.value,
+        };
+
+        try {
+          // Mock registration for frontend-only setup
+          // In production, this would be an actual API call
+          const mockResponse = await mockRegister(payload);
+          
+          if (!mockResponse.success) {
+            throw new Error(mockResponse.message || 'Registration failed.');
+          }
+
+          renderStatus('Registration successful! Redirecting to login...');
+          registerForm.reset();
+          registerForm.role.value = 'SupportAgent';
+          
+          // Redirect to login after success
+          setTimeout(() => {
+            window.location.href = '/login.html';
+          }, 2000);
+          
+        } catch (error) {
+          renderStatus(error.message, true);
+        } finally {
+          // Re-enable form
+          submitButton.textContent = originalButtonText;
+          submitButton.disabled = false;
+          registerForm.classList.remove('loading');
+        }
+      });
+    </script>
+  </body>
+</html>
